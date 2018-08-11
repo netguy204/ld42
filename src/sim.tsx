@@ -63,10 +63,16 @@ let KnownTouchstones = new TouchstoneLibrary([
     new TouchstoneType("Conservative"),
     new TouchstoneType("Religion"),
     new TouchstoneType("Education"),
-    new TouchstoneType("Children")
+    new TouchstoneType("Children"),
+    new TouchstoneType("Celebrity")
 ]);
 
 class Author extends TouchstoneBag {
+    progress: number; // [0,1] when they'll have their next article ready
+    ticksPerArticle: number; // how many game ticks it takes to write an article
+    newWrittenLastInterval: number; // how many articles they've produce in the last interval
+    numPublishedLastInterval: number; // how many of their articles we've published
+
     /*
     write(): Article {
         return null;
@@ -83,6 +89,7 @@ function MergeArticles(articles: Article[]): Newspaper {
 
 class Newspaper {
     articles: Article[];
+    progressToPublish: number; // [0, 1] 1 means it's published, 0 means we just started
 
     constructor(articles: Article[]) {
         this.articles = articles;
@@ -126,7 +133,53 @@ class Population extends TouchstoneBag {
     }
 }
 
+class WorldEvent {
+    instance: TouchstoneInstance;
+
+    name(): string {
+        return this.instance.identity.name;
+    }
+}
+
+let Constants = {
+    TicksPerNewscycle: 10,
+    TicksPerSecond: 10,
+};
+
 export class World {
-    hiredAuthors: Author[];
-    availableArticles: Article[];
+    employedAuthors: Author[];
+    availableAuthors: Author[];
+
+    pendingArticles: Article[];
+
+    nextEdition: Newspaper;
+    publicMemory: Newspaper[];
+
+    moneyInBank: number;
+    currentSubscribers: number;
+
+    currentEvents: WorldEvent[];
+
+    populations: Population[];
+
+    hire(author: Author): void {
+
+    }
+
+    fire(author: Author): void {
+
+    }
+
+    addArticleToCurrent(article: Article): void {
+
+    }
+
+    removeArticleFromCurrent(article: Article): void {
+
+    }
+
+    tick(): void {
+
+    }
+    // authors can quit if you don't publish enough of their articles
 }
