@@ -1,6 +1,12 @@
+import { types } from "util";
 
 function randomInt(max: number) {
     return Math.floor(Math.random() * max);
+}
+
+function randomBetween(min: number, max: number) {
+    let span = max - min;
+    return min + Math.floor(Math.random() * span);
 }
 
 class TouchstoneType {
@@ -34,22 +40,30 @@ export class TouchstoneInstance {
 }
 
 class TouchstoneLibrary {
-    types: TouchstoneType[];
+    static types = [
+        new TouchstoneType("Liberal"),
+        new TouchstoneType("Conservative"),
+        new TouchstoneType("Religion"),
+        new TouchstoneType("Education"),
+        new TouchstoneType("Children"),
+        new TouchstoneType("Celebrity")
+    ];
 
-    constructor(types: TouchstoneType[]) {
-        this.types = types;
-    }
-
-    draw(n: number): TouchstoneBag {
+    static draw(n: number): TouchstoneBag {
         let instances: TouchstoneInstance[] = [];
 
         for(let i = 0; i < n; i++) {
-            let which = (Math.random() * this.types.length);
+            let which = randomInt(TouchstoneLibrary.types.length);
             let approval = Math.random() > .5;
-            instances.push(new TouchstoneInstance(this.types[which], approval));
+            instances.push(new TouchstoneInstance(TouchstoneLibrary.types[which], approval));
         }
 
         return new TouchstoneBag(instances);
+    }
+
+    static drawRandom() {
+        let random = randomInt(TouchstoneLibrary.types.length);
+        this.draw(random);
     }
 }
 
@@ -61,23 +75,31 @@ class TouchstoneBag {
     }
 }
 
-let KnownTouchstones = new TouchstoneLibrary([
-    new TouchstoneType("Liberal"),
-    new TouchstoneType("Conservative"),
-    new TouchstoneType("Religion"),
-    new TouchstoneType("Education"),
-    new TouchstoneType("Children"),
-    new TouchstoneType("Celebrity")
-]);
+// let KnownTouchstones = new ;
 
 export class Author extends TouchstoneBag {
     progress: number; // [0,1] when they'll have their next article ready
     ticksPerArticle: number; // how many game ticks it takes to write an article
-    newWrittenLastInterval: number; // how many articles they've produce in the last interval
+    numWrittenLastInterval: number; // how many articles they've produce in the last interval
     numPublishedLastInterval: number; // how many of their articles we've published
+
+    constructor(touchstones: TouchstoneInstance[], ticksPerArticle: number) {
+        super(touchstones);
+        this.progress = 0;
+        this.ticksPerArticle = ticksPerArticle;
+        this.numWrittenLastInterval = 0;
+        this.numPublishedLastInterval = 0;
+    }
+
+    static random(touchstones: number): Author {
+        let traits = TouchstoneLibrary.draw(touchstones);
+        let ticksPerArticle = randomBetween(4, 20);
+        return new Author(traits.instances, ticksPerArticle);
+    }
 
     /*
     write(): Article {
+
         return null;
     }
     */
@@ -150,6 +172,10 @@ export let Constants = {
 };
 
 export class World {
+    constructor() {
+        this.employedAuthors.push(Author.random(3));
+    }
+
     employedAuthors: Author[];
     availableAuthors: Author[];
 
@@ -166,11 +192,12 @@ export class World {
     populations: Population[];
 
     hire(author: Author): void {
-
+        this.employedAuthors.push(author);
     }
 
     fire(author: Author): void {
-
+        let iToRemove = this.employedAuthors.indexOf(author)
+        this.employedAuthors = this.employedAuthors.slice(iToRemove);
     }
 
     addArticleToCurrent(article: Article): void {
@@ -181,8 +208,15 @@ export class World {
 
     }
 
+    transferReadyArticles() {
+
+    }
+
     tick(): void {
         console.log("tick");
+        this.transferReadyArticles();
     }
     // authors can quit if you don't publish enough of their articles
 }
+
+
