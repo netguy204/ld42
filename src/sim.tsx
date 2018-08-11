@@ -121,6 +121,7 @@ export class Author extends TouchstoneBag {
 }
 
 export class Article extends TouchstoneBag {
+    headline: string;
 }
 
 function MergeArticles(articles: Article[]): Newspaper {
