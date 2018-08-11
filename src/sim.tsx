@@ -172,10 +172,6 @@ export let Constants = {
 };
 
 export class World {
-    constructor() {
-        this.employedAuthors.push(Author.random(3));
-    }
-
     employedAuthors: Author[];
     availableAuthors: Author[];
 
@@ -190,6 +186,20 @@ export class World {
     currentEvents: WorldEvent[];
 
     populations: Population[];
+
+    constructor() {
+        this.employedAuthors = [];
+        this.availableAuthors = [];
+        this.pendingArticles = [];
+        this.nextEdition = new Newspaper([]);
+        this.publicMemory = [];
+        this.moneyInBank = 5000;
+        this.currentSubscribers = 1000;
+        this.currentEvents = [];
+        this.populations = [];
+
+        this.employedAuthors.push(Author.random(3));
+    }
 
     hire(author: Author): void {
         this.employedAuthors.push(author);
