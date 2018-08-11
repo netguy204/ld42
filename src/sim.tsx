@@ -1,4 +1,7 @@
 
+function randomInt(max: number) {
+    return Math.floor(Math.random() * max);
+}
 
 class TouchstoneType {
     name: string;
@@ -12,7 +15,7 @@ class TouchstoneType {
     }
 }
 
-class TouchstoneInstance {
+export class TouchstoneInstance {
     identity: TouchstoneType;
     // how you feel about it
     approval: boolean;
@@ -67,7 +70,7 @@ let KnownTouchstones = new TouchstoneLibrary([
     new TouchstoneType("Celebrity")
 ]);
 
-class Author extends TouchstoneBag {
+export class Author extends TouchstoneBag {
     progress: number; // [0,1] when they'll have their next article ready
     ticksPerArticle: number; // how many game ticks it takes to write an article
     newWrittenLastInterval: number; // how many articles they've produce in the last interval
@@ -80,14 +83,14 @@ class Author extends TouchstoneBag {
     */
 }
 
-class Article extends TouchstoneBag {
+export class Article extends TouchstoneBag {
 }
 
 function MergeArticles(articles: Article[]): Newspaper {
     return new Newspaper(articles);
 }
 
-class Newspaper {
+export class Newspaper {
     articles: Article[];
     progressToPublish: number; // [0, 1] 1 means it's published, 0 means we just started
 
@@ -96,7 +99,7 @@ class Newspaper {
     }
 }
 
-class Population extends TouchstoneBag {
+export class Population extends TouchstoneBag {
     loyalty: number;
     subscriberRatio: number; // 0-1, what percentage subscribe?
     largeness: number; // 0-1, how many from teeny tiny to massive
@@ -133,7 +136,7 @@ class Population extends TouchstoneBag {
     }
 }
 
-class WorldEvent {
+export class WorldEvent {
     instance: TouchstoneInstance;
 
     name(): string {
@@ -141,7 +144,7 @@ class WorldEvent {
     }
 }
 
-let Constants = {
+export let Constants = {
     TicksPerNewscycle: 10,
     TicksPerSecond: 10,
 };
@@ -179,7 +182,7 @@ export class World {
     }
 
     tick(): void {
-
+        console.log("tick");
     }
     // authors can quit if you don't publish enough of their articles
 }
