@@ -1,3 +1,4 @@
+import { types } from "util";
 
 
 class TouchstoneType {
@@ -31,22 +32,30 @@ class TouchstoneInstance {
 }
 
 class TouchstoneLibrary {
-    types: TouchstoneType[];
-
-    constructor(types: TouchstoneType[]) {
-        this.types = types;
-    }
+    static types = [
+        new TouchstoneType("Liberal"),
+        new TouchstoneType("Conservative"),
+        new TouchstoneType("Religion"),
+        new TouchstoneType("Education"),
+        new TouchstoneType("Children"),
+        new TouchstoneType("Celebrity")
+    ];
 
     draw(n: number): TouchstoneBag {
         let instances: TouchstoneInstance[] = [];
 
         for(let i = 0; i < n; i++) {
-            let which = (Math.random() * this.types.length);
+            let which = (Math.random() * TouchstoneLibrary.types.length);
             let approval = Math.random() > .5;
-            instances.push(new TouchstoneInstance(this.types[which], approval));
+            instances.push(new TouchstoneInstance(TouchstoneLibrary.types[which], approval));
         }
 
         return new TouchstoneBag(instances);
+    }
+
+    drawRandom() {
+        let random = Math.floor(Math.random() * TouchstoneLibrary.types.length);
+        this.draw(random);
     }
 }
 
@@ -58,14 +67,7 @@ class TouchstoneBag {
     }
 }
 
-let KnownTouchstones = new TouchstoneLibrary([
-    new TouchstoneType("Liberal"),
-    new TouchstoneType("Conservative"),
-    new TouchstoneType("Religion"),
-    new TouchstoneType("Education"),
-    new TouchstoneType("Children"),
-    new TouchstoneType("Celebrity")
-]);
+// let KnownTouchstones = new ;
 
 class Author extends TouchstoneBag {
     progress: number; // [0,1] when they'll have their next article ready
@@ -73,11 +75,11 @@ class Author extends TouchstoneBag {
     newWrittenLastInterval: number; // how many articles they've produce in the last interval
     numPublishedLastInterval: number; // how many of their articles we've published
 
-    /*
+    
     write(): Article {
+
         return null;
     }
-    */
 }
 
 class Article extends TouchstoneBag {
@@ -147,6 +149,10 @@ let Constants = {
 };
 
 export class World {
+    constructor() {
+        this.employedAuthors.push(new Author());
+    }
+
     employedAuthors: Author[];
     availableAuthors: Author[];
 
@@ -163,11 +169,12 @@ export class World {
     populations: Population[];
 
     hire(author: Author): void {
-
+        this.employedAuthors.push(author);
     }
 
     fire(author: Author): void {
-
+        let iToRemove = this.employedAuthors.indexOf(author)
+        this.employedAuthors = this.employedAuthors.slice(iToRemove);
     }
 
     addArticleToCurrent(article: Article): void {
@@ -178,8 +185,15 @@ export class World {
 
     }
 
+    transferReadyArticles() {
+
+    }
+
     tick(): void {
+        this.transferReadyArticles();
 
     }
     // authors can quit if you don't publish enough of their articles
 }
+
+
