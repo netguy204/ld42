@@ -16,7 +16,9 @@ class TouchstoneC extends React.Component<TouchstoneProps> {
             cname += ' negative';
         }
 
-        return <span className={cname}>{this.props.touchstone.identity.name}</span>;
+        let name = this.props.touchstone.identity.name;
+
+        return <span key={name} className={cname}>{name}</span>;
     }
 }
 
@@ -26,7 +28,10 @@ type AuthorProps = {
 
 class AuthorC extends React.Component<AuthorProps> {
     render() {
-        let touchstones = this.props.author.instances.map((tsi) => <TouchstoneC touchstone={tsi}></TouchstoneC>);
+        let touchstones = this.props.author.instances.map((tsi) => {
+            let key = tsi.identity.name;
+            return <TouchstoneC key={key} touchstone={tsi}></TouchstoneC>
+        });
         return <div>{touchstones}</div>;
     }
 }
@@ -37,7 +42,9 @@ type AuthorsProps = {
 
 class EmployedAuthorsC extends React.Component<AuthorsProps> {
     render() {
-        let authors = this.props.authors.map((auth) => <AuthorC author={auth}></AuthorC>);
+        let authors = this.props.authors.map((auth) => {
+            return <AuthorC author={auth}></AuthorC>
+        });
         return <div>{authors}</div>;
     }
 }
@@ -110,12 +117,25 @@ class App extends React.Component<AppProps, AppState> {
         if (this.state.gameState == GameState.BOOT) {
             return <StartMenu onStart={() => this.startGame()}></StartMenu>;
         } else {
-            return <Game world={this.props.world}></Game>;
+            return (
+                <div>
+                    <Game world={this.props.world}></Game>
+                    <button onClick={() => this.pauseGame(true)}>Pause</button>
+                </div>
+            );
         }
     }
 
     startGame() {
         this.setState({gameState: GameState.RUNNING});
+    }
+
+    pauseGame(pause: boolean) {
+        if (pause) {
+            this.setState({gameState: GameState.PAUSED});
+        } else {
+            this.setState({gameState: GameState.RUNNING});
+        }
     }
 }
 
