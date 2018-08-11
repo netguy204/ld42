@@ -43,7 +43,7 @@ type AuthorsProps = {
 class EmployedAuthorsC extends React.Component<AuthorsProps> {
     render() {
         let authors = this.props.authors.map((auth) => {
-            return <AuthorC author={auth}></AuthorC>
+            return <AuthorC key={auth.name} author={auth}></AuthorC>
         });
         return <div>{authors}</div>;
     }
@@ -117,10 +117,14 @@ class App extends React.Component<AppProps, AppState> {
         if (this.state.gameState == GameState.BOOT) {
             return <StartMenu onStart={() => this.startGame()}></StartMenu>;
         } else {
+            let pauseButton = <button onClick={() => this.pauseGame(true)}>Pause</button>;
+            if (this.state.gameState == GameState.PAUSED) {
+                pauseButton = <button onClick={() => this.pauseGame(false)}>Un-Pause</button>;
+            }
             return (
                 <div>
                     <Game world={this.props.world}></Game>
-                    <button onClick={() => this.pauseGame(true)}>Pause</button>
+                    {pauseButton}
                 </div>
             );
         }

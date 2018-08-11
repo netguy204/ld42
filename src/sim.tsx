@@ -50,13 +50,25 @@ class TouchstoneLibrary {
     ];
 
     static draw(n: number): TouchstoneBag {
-        let instances: TouchstoneInstance[] = [];
+        let kinds: TouchstoneType[] = [];
 
         for(let i = 0; i < n; i++) {
             let which = randomInt(TouchstoneLibrary.types.length);
-            let approval = Math.random() > .5;
-            instances.push(new TouchstoneInstance(TouchstoneLibrary.types[which], approval));
+            let kind = TouchstoneLibrary.types[which];
+            while (true) {
+                if (kinds.indexOf(kind) < 0) {
+                    kinds.push(kind);
+                    break
+                }
+                which = randomInt(TouchstoneLibrary.types.length);
+                kind = TouchstoneLibrary.types[which];
+            }
         }
+
+        let instances = kinds.map((kind) => {
+            let approval = Math.random() > .5;
+            return new TouchstoneInstance(kind, approval);
+        });
 
         return new TouchstoneBag(instances);
     }
@@ -82,19 +94,22 @@ export class Author extends TouchstoneBag {
     ticksPerArticle: number; // how many game ticks it takes to write an article
     numWrittenLastInterval: number; // how many articles they've produce in the last interval
     numPublishedLastInterval: number; // how many of their articles we've published
+    name: string;
 
-    constructor(touchstones: TouchstoneInstance[], ticksPerArticle: number) {
+    constructor(touchstones: TouchstoneInstance[], ticksPerArticle: number, name: string) {
         super(touchstones);
         this.progress = 0;
         this.ticksPerArticle = ticksPerArticle;
         this.numWrittenLastInterval = 0;
         this.numPublishedLastInterval = 0;
+        this.name = name;
     }
 
     static random(touchstones: number): Author {
         let traits = TouchstoneLibrary.draw(touchstones);
         let ticksPerArticle = randomBetween(4, 20);
-        return new Author(traits.instances, ticksPerArticle);
+        let name = "0" + randomInt(1000);
+        return new Author(traits.instances, ticksPerArticle, name);
     }
 
     /*
