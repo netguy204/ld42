@@ -8,11 +8,22 @@
             background-color: beige;
         }
 
-        .game {
+        .gameRows {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .gameColumns {
             display: flex;
             flex-wrap: nowrap;
             width: 100%;
-            height: 100%;
+            height: 80%;
+        }
+
+        .regions {
+            border-top: 1px solid bisque;
+            margin-top: 5px;
         }
 
         .barFrame {

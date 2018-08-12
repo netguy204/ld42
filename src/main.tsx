@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import {World, Author, TouchstoneInstance, Constants, Newspaper, Article, Timer} from './sim';
+import {World, Author, TouchstoneInstance, Constants, Newspaper, Article, Timer, Population} from './sim';
 import * as numbro from 'numbro';
 
 type TouchstoneProps = {
@@ -318,14 +318,27 @@ class StatsC extends React.Component<AppProps> {
     }
 }
 
+class RegionsC extends React.Component<AppProps> {
+    render() {
+        return (
+            <div className="regions">
+                <h1>Regions Go Here</h1>
+            </div>
+        );
+    }
+}
+
 class Game extends React.Component<AppProps, {}> {
     render() {
         return (
-            <div className="game">
-                <EmployedAuthorsC authors={this.props.world.employedAuthors} />
-                <PendingArticlesC world={this.props.world} />
-                <NextEditionC world={this.props.world} />
-                <StatsC world={this.props.world} />
+            <div className="gameRows">
+                <div className="gameColumns">
+                    <EmployedAuthorsC authors={this.props.world.employedAuthors} />
+                    <PendingArticlesC world={this.props.world} />
+                    <NextEditionC world={this.props.world} />
+                    <StatsC world={this.props.world} />
+                </div>
+                <RegionsC world={this.props.world} />
             </div>
         );
     }
