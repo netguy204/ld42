@@ -61,6 +61,14 @@ export class TouchstoneInstance {
     equals(other: TouchstoneInstance): boolean {
         return this.identity == other.identity && this.approval == other.approval;
     }
+
+    toString(): string {
+        let modifier = 'Pro-';
+        if (!this.approval) {
+            modifier = 'Anti-';
+        }
+        return modifier + this.identity.name;
+    }
 }
 
 class TouchstoneLibrary {

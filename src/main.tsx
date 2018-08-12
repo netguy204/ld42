@@ -5,23 +5,37 @@ import * as numbro from 'numbro';
 
 type TouchstoneProps = {
     touchstone: TouchstoneInstance;
+    count: number;
 }
 
 class TouchstoneC extends React.Component<TouchstoneProps> {
     render() {
-        let cname = 'touchstone tooltip';
+        let sentiment = '';
         if (this.props.touchstone.approval) {
-            cname += ' positive';
+            sentiment = ' fa-thumbs-up';
         } else {
-            cname += ' negative';
+            sentiment = ' fa-thumbs-down';
         }
 
-        let name = this.props.touchstone.identity.name;
+        let name = this.props.touchstone.toString();
         let icon = this.props.touchstone.identity.icon;
-        cname += " fas " + icon;
+        let cname = 'touchstone tooltip fas ' + icon;
+
+        let countBadge: any = null;
+        if (this.props.count > 1) {
+            countBadge = (
+                <div className="countBadge">
+                    {this.props.count}
+                </div>
+            );
+        }
 
         return (
             <i key={name} className={cname}>
+                <div className="sentimentBadge">
+                    <i className={"far " + sentiment}></i>
+                </div>
+                {countBadge}
                 <div className="tooltiptext">
                     {name}
                 </div>
@@ -36,10 +50,21 @@ type TouchstonesProps = {
 
 class TouchstonesC extends React.Component<TouchstonesProps> {
     render() {
-        let touchstones = this.props.touchstones.map((tsi) => {
-            let key = tsi.identity.name;
-            return <TouchstoneC key={key} touchstone={tsi} />
+        let counts: {[key: string]:number} = {};
+        let instances: {[key: string]:any} = {};
+
+        this.props.touchstones.forEach((tsi) => {
+            let current = counts[tsi.toString()] || 0;
+            counts[tsi.toString()] = current + 1;
+            instances[tsi.toString()] = tsi;
         });
+
+        let touchstones = [];
+        for (let prop in counts) {
+            if (counts.hasOwnProperty(prop)) {
+                touchstones.push(<TouchstoneC key={prop} touchstone={instances[prop]} count={counts[prop]} />)
+            }
+        }
         return <div>{touchstones}</div>;
     }
 }
@@ -82,7 +107,7 @@ class AuthorC extends React.Component<AuthorProps> {
     render() {
         return (
             <div className="author">
-                <i className="fas fa-address-book avatar" />
+                <i className="far fa-address-book avatar" />
                 <div className="rows">
                     <div className="name">{this.props.author.name}</div>
                     <TouchstonesC touchstones={this.props.author.instances} />
@@ -150,7 +175,7 @@ class ArticleC extends React.Component<ArticleProps> {
         return (
             <div className="article">
                 {fromStagedButton}
-                <i className="icon fas fa-file-alt"></i>
+                <i className="icon far fa-file-alt"></i>
                 <div className="rows">
                     <span className="headline">{this.props.article.headline}</span>
                     <TouchstonesC touchstones={this.props.article.instances} /> 
