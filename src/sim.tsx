@@ -14,7 +14,7 @@ export class Timer {
     startTicks: number;
 
     constructor(startTicks: number) {
-        this.startTicks = 80 //startTicks;
+        this.startTicks = startTicks;
         this.ticksRemaining = startTicks;
     }
 
@@ -219,6 +219,14 @@ export class Newspaper {
 export class Population extends TouchstoneBag {
     name: string;
     loyalty: number; // -1 to 1, -1 most displeased. 1 is estatic
+    /*
+    numSubscribers: number;
+    totalPopulation: number;
+
+    subscriberRatio(): number {
+        return numSubscribers / totalPopulation;
+    }
+    */
     subscriberRatio: number; // 0-1, what percentage subscribe?
     largeness: number; // 0-1, how many from teeny tiny to massive
     topics: TouchstoneInstance[];
@@ -259,8 +267,12 @@ export class Population extends TouchstoneBag {
         return total;
     }
 
+    getCurrentPopulationCount(): number {
+        return this.largeness * 10000;
+    }
+
     getSubscriberCount(publicMemory: Newspaper[]): number {
-        let size = this.largeness * 10000;
+        let size = this.getCurrentPopulationCount();
         let subCount = 0;
 
         publicMemory.forEach(paper => {
@@ -331,12 +343,19 @@ export class World {
         this.currentEvents = [];
         this.populations = [];
 
-        this.employedAuthors.push();
-        this.populations.push(new Population(
-            TouchstoneLibrary.draw(1).instances,
-            populationNameGen.toString(),
-            Math.random() / 2 + 0.5
-        ))
+        let traits: TouchstoneBag|null = null;
+        for (let i = 0; i < 5; i++) {
+            let nTraits = randomBetween(1, 3);
+            traits = TouchstoneLibrary.draw(nTraits);
+            this.populations.push(new Population(
+                traits.instances,
+                populationNameGen.toString(),
+                Math.random() / 2 + 0.5
+            ))
+        }
+
+        let author = new Author((traits as TouchstoneBag).instances, Constants.TicksPerNewscycle/2, "Susy Joe");
+        this.employedAuthors.push(author);
     }
 
     hire(author: Author): void {
@@ -368,8 +387,8 @@ export class World {
     }
 
     aWildApplicantAppeared(): void {
-        if (randomBetween(0, 1) == 1) {
-            this.availableAuthors.push();
+        if (Math.random() < 1.0 / Constants.TicksPerNewscycle) {
+            this.availableAuthors.push(Author.random());
         }
     }
 
@@ -444,7 +463,23 @@ export class World {
             this.nextEdition = new Newspaper([]);
         }
     }
-    // authors can quit if you don't publish enough of their articles
+
+    /*
+    function subscriberChange(population: Population, publicMemory: Newspaper[]) {
+        let appeal = 0;
+        // sum of scores
+
+        appeal = appeal / publicMemory.length;
+
+        if (appeal > 0) {
+            let count = population.getCurrentSubscriberCount();
+            population.subscriberRatio = 
+        }
+    }
+    pop.appeal = pop.evaluate(publicMemory);
+    pop.subscribers += subscriberChange(pop.subscribers, pop.bigness, pop.appeal); // can be > 0 or < 0
+
+    */
 }
 
 
