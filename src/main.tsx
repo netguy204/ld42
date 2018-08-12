@@ -1,6 +1,7 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import {World, Author, TouchstoneInstance, Constants, Newspaper, Article, Timer} from './sim';
+import * as numbro from 'numbro';
 
 type TouchstoneProps = {
     touchstone: TouchstoneInstance;
@@ -241,6 +242,48 @@ class NextEditionC extends React.Component<AppProps> {
     }
 }
 
+class CollapsedPaperC extends React.Component<PaperProps> {
+    render() {
+        return (
+            <div className="collapsedPaper">
+                <TouchstonesC touchstones={this.props.paper.touchstones()} />
+            </div>
+        );
+    }
+}
+
+type PublicMemoryProps = {
+    papers: Newspaper[];
+}
+
+class MissedEdition extends React.Component<{}> {
+    render() {
+        return (
+            <div className="collapsedPaper">
+                Missed Edition!
+            </div>
+        );
+    }
+}
+
+class PublicMemory extends React.Component<PublicMemoryProps> {
+    render() {
+        let publicMemory = this.props.papers.map(paper => {
+            if (paper.articles.length > 0) {
+                let key = paper.articles[0].headline;
+                return <CollapsedPaperC paper={paper} key={key} isSummary={true} />
+            }
+            return <MissedEdition />
+        });
+
+        return (
+            <div className="publicMemory">
+                {publicMemory}
+            </div>
+        );
+    }
+}
+
 type StatProps = {
     name: string;
     value: string;
@@ -259,11 +302,17 @@ class StatRowC extends React.Component<StatProps> {
 
 class StatsC extends React.Component<AppProps> {
     render() {
-        let money = `\$${Math.floor(this.props.world.moneyInBank)}`;
+        let money = `\$${numbro(this.props.world.moneyInBank).format({average: true})}`;
+        let subscribers = numbro(this.props.world.currentSubscribers).format({average: true});
+
         return (
             <div className="stats section">
+                <h1>Public Memory</h1>
+                <PublicMemory papers={this.props.world.publicMemory} />
+
                 <h1>Stats</h1>
                 <StatRowC name="Money" value={money} />
+                <StatRowC name="Subscribers" value={subscribers} />
             </div>
         );
     }

@@ -259,7 +259,7 @@ export class WorldEvent {
 
 export let Constants = {
     TicksPerNewscycle: 10,
-    TicksPerSecond: 10,
+    TicksPerSecond: 2,
     NewpapersInPublicMemory: 4,
 };
 
