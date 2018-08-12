@@ -1,4 +1,4 @@
-import { types } from "util";
+import NameGen from './namegen';
 
 function randomInt(max: number) {
     return Math.floor(Math.random() * max);
@@ -9,11 +9,35 @@ function randomBetween(min: number, max: number) {
     return min + Math.floor(Math.random() * span);
 }
 
+class Timer {
+    ticksRemaining: number;
+    startTicks: number;
+
+    constructor(startTicks: number) {
+        this.startTicks = startTicks;
+        this.ticksRemaining = startTicks;
+    }
+
+    tick(): boolean {
+        if (this.ticksRemaining == 0) {
+            return true;
+        }
+        this.ticksRemaining -= 1;
+        return false;
+    }
+
+    reset(): void {
+        this.ticksRemaining = this.startTicks;
+    }
+}
+
 class TouchstoneType {
     name: string;
+    icon: string;
 
-    constructor(name: string) {
+    constructor(name: string, icon: string) {
         this.name = name;
+        this.icon = icon;
     }
 
     createInstance(approval: boolean) {
@@ -41,12 +65,30 @@ export class TouchstoneInstance {
 
 class TouchstoneLibrary {
     static types = [
-        new TouchstoneType("Liberal"),
-        new TouchstoneType("Conservative"),
-        new TouchstoneType("Religion"),
-        new TouchstoneType("Education"),
-        new TouchstoneType("Children"),
-        new TouchstoneType("Celebrity")
+        new TouchstoneType(
+            "Liberal",
+            "fa-university"
+        ),
+        new TouchstoneType(
+            "Conservative",
+            "fa-toolbox"
+        ),
+        new TouchstoneType(
+            "Religion",
+            "fa-church"
+        ),
+        new TouchstoneType(
+            "Education",
+            "fa-graduation-cap"
+        ),
+        new TouchstoneType(
+            "Children",
+            "fa-child"
+        ),
+        new TouchstoneType(
+            "Celebrity",
+            "fa-grin-stars"
+        ),
     ];
 
     static draw(n: number): TouchstoneBag {
@@ -87,11 +129,12 @@ class TouchstoneBag {
     }
 }
 
-// let KnownTouchstones = new ;
+let authorNameGen = NameGen.compile("sV'i");
+let articleNameGen = NameGen.compile("sV'i");
 
 export class Author extends TouchstoneBag {
     progress: number; // [0,1] when they'll have their next article ready
-    ticksPerArticle: number; // how many game ticks it takes to write an article
+    articleTimer: Timer;
     numWrittenLastInterval: number; // how many articles they've produce in the last interval
     numPublishedLastInterval: number; // how many of their articles we've published
     name: string;
@@ -99,7 +142,7 @@ export class Author extends TouchstoneBag {
     constructor(touchstones: TouchstoneInstance[], ticksPerArticle: number, name: string) {
         super(touchstones);
         this.progress = 0;
-        this.ticksPerArticle = ticksPerArticle;
+        this.articleTimer = new Timer(ticksPerArticle);
         this.numWrittenLastInterval = 0;
         this.numPublishedLastInterval = 0;
         this.name = name;
@@ -108,24 +151,47 @@ export class Author extends TouchstoneBag {
     static random(touchstones: number): Author {
         let traits = TouchstoneLibrary.draw(touchstones);
         let ticksPerArticle = randomBetween(4, 20);
-        let name = "0" + randomInt(1000);
+        let name = authorNameGen.toString();
         return new Author(traits.instances, ticksPerArticle, name);
     }
 
-    /*
-    write(): Article {
-
-        return null;
+    tick(): Article|null {
+       if(this.articleTimer.tick()) {
+           this.articleTimer.reset();
+           return this.write();
+       } else {
+           return null;
+       }
     }
-    */
+
+    write(): Article {
+        // sample from our interests to product an article
+        let samples = randomBetween(1, this.instances.length);
+        let instances: TouchstoneInstance[] = [];
+        for (let i = 0; i < samples; i++) {
+            instances.push(this.instances[randomInt(this.instances.length)]);
+        }
+
+        // how long the article is relevent
+        let timeout = randomBetween(20, 50);
+        return new Article(instances, articleNameGen.toString(), timeout);
+    }
 }
 
 export class Article extends TouchstoneBag {
     headline: string;
-}
+    pendingTimer: Timer;
 
-function MergeArticles(articles: Article[]): Newspaper {
-    return new Newspaper(articles);
+    constructor(instances: TouchstoneInstance[], headline: string, timeout: number) {
+        super(instances);
+        this.headline = headline;
+        this.pendingTimer = new Timer(timeout);
+    }
+
+    // return true if we should expire
+    tick(): boolean {
+        return this.pendingTimer.tick();
+    }
 }
 
 export class Newspaper {
@@ -134,6 +200,15 @@ export class Newspaper {
 
     constructor(articles: Article[]) {
         this.articles = articles;
+    }
+
+    touchstones(): TouchstoneInstance[] {
+        let touchstones: TouchstoneInstance[] = [];
+        for (let artI = 0; artI < this.articles.length; artI++) {
+            let article = this.articles[artI];
+            touchstones = touchstones.concat(article.instances);
+        }
+        return touchstones;
     }
 }
 
@@ -223,15 +298,23 @@ export class World {
 
     fire(author: Author): void {
         let iToRemove = this.employedAuthors.indexOf(author)
-        this.employedAuthors = this.employedAuthors.slice(iToRemove);
+        this.employedAuthors.splice(iToRemove, 1);
     }
 
     addArticleToCurrent(article: Article): void {
+        // remove from old
+        this.pendingArticles.splice(this.pendingArticles.indexOf(article), 1);
 
+        // add to new
+        this.nextEdition.articles.push(article);
     }
 
     removeArticleFromCurrent(article: Article): void {
+        // remove from old
+        this.nextEdition.articles.splice(this.nextEdition.articles.indexOf(article), 1);
 
+        // add to new
+        this.pendingArticles.push(article);
     }
 
     transferReadyArticles() {
@@ -239,7 +322,27 @@ export class World {
     }
 
     tick(): void {
-        console.log("tick");
+        // give all authors a chance to finish writing
+        this.employedAuthors.forEach((author) => {
+            let maybeArticle = author.tick();
+            if (maybeArticle != null) {
+                console.log("new article");
+                this.pendingArticles.push(maybeArticle as Article);
+            }
+        });
+
+        // give articles a chance to timeout
+        let toRemove: Article[] = [];
+        this.pendingArticles.forEach((article) => {
+            if (article.tick()) {
+                toRemove.push(article);
+            }
+        })
+
+        // remove the articles that had timed out
+        toRemove.forEach((article) => {
+            this.pendingArticles.splice(this.pendingArticles.indexOf(article), 1);
+        })
         this.transferReadyArticles();
     }
     // authors can quit if you don't publish enough of their articles

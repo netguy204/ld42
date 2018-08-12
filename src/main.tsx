@@ -9,7 +9,7 @@ type TouchstoneProps = {
 
 class TouchstoneC extends React.Component<TouchstoneProps> {
     render() {
-        let cname = 'touchstone';
+        let cname = 'touchstone tooltip';
         if (this.props.touchstone.approval) {
             cname += ' positive';
         } else {
@@ -17,8 +17,16 @@ class TouchstoneC extends React.Component<TouchstoneProps> {
         }
 
         let name = this.props.touchstone.identity.name;
+        let icon = this.props.touchstone.identity.icon;
+        cname += " fas " + icon;
 
-        return <span key={name} className={cname}>{name}</span>;
+        return (
+            <i key={name} className={cname}>
+                <div className="tooltiptext">
+                    {name}
+                </div>
+            </i>
+        );
     }
 }
 
@@ -44,8 +52,11 @@ class AuthorC extends React.Component<AuthorProps> {
     render() {
         return (
             <div className="author">
-                <span className="name">{this.props.author.name}</span>
-                <TouchstonesC touchstones={this.props.author.instances} />
+                <i className="fas fa-address-book avatar" />
+                <div className="rows">
+                    <div className="name">{this.props.author.name}</div>
+                    <TouchstonesC touchstones={this.props.author.instances} />
+                </div>
             </div>
         );
     }
@@ -69,16 +80,47 @@ class EmployedAuthorsC extends React.Component<AuthorsProps> {
     }
 }
 
+enum ArticleState {
+    PENDING,
+    STAGED,
+    PUBLISHED
+}
+
 type ArticleProps = {
     article: Article;
+    articleState: ArticleState;
+    onAction?: () => void;
+    onUnstage?: () => void;
 }
 
 class ArticleC extends React.Component<ArticleProps> {
     render() {
+        let toStagedButton = null;
+        if (this.props.articleState == ArticleState.PENDING) {
+            toStagedButton = (
+                <button className="rightJustify" onClick={this.props.onAction}>
+                    <i className="fas fa-chevron-right"></i>
+                </button>
+            )
+        }
+
+        let fromStagedButton = null;
+        if (this.props.articleState == ArticleState.STAGED) {
+            fromStagedButton = (
+                <button onClick={this.props.onAction}>
+                    <i className="fas fa-chevron-left"></i>
+                </button>
+            );
+        }
         return (
-            <div>
-               <span className="headline">{this.props.article.headline}</span>
-               <TouchstonesC touchstones={this.props.article.instances} /> 
+            <div className="article">
+                {fromStagedButton}
+                <i className="icon fas fa-file-alt"></i>
+                <div className="rows">
+                    <span className="headline">{this.props.article.headline}</span>
+                    <TouchstonesC touchstones={this.props.article.instances} /> 
+                </div>
+                {toStagedButton}
             </div>
         );
     }
@@ -86,12 +128,23 @@ class ArticleC extends React.Component<ArticleProps> {
 
 type ArticlesProps = {
     articles: Article[];
+    articleState: ArticleState;
+    onAction?: (article: Article) => void;
 }
 
 class ArticlesC extends React.Component<ArticlesProps> {
     render() {
         let articles = this.props.articles.map((art) => {
-            return <ArticleC article={art} key={art.headline} />;
+            let onAction: () => void = () => null;
+            if (this.props.onAction !== undefined) {
+                let target = this.props.onAction as (article: Article) => void;
+                onAction = () => target(art);
+            }
+
+            return <ArticleC article={art}
+                key={art.headline}
+                articleState={this.props.articleState}
+                onAction={onAction} />;
         });
         return (
             <div className="articles">
@@ -101,12 +154,19 @@ class ArticlesC extends React.Component<ArticlesProps> {
     }
 }
 
-class PendingArticlesC extends React.Component<ArticlesProps> {
+type AppProps = {
+    world: World;
+}
+
+class PendingArticlesC extends React.Component<AppProps> {
     render() {
         return (
             <div className="pendingArticles section">
                 <h1>Pending Articles</h1>
-                <ArticlesC articles={this.props.articles} />
+                <ArticlesC articles={this.props.world.pendingArticles}
+                    articleState={ArticleState.PENDING}
+                    onAction={(art) => this.props.world.addArticleToCurrent(art)}
+                />
             </div>
         );
     }
@@ -115,35 +175,34 @@ class PendingArticlesC extends React.Component<ArticlesProps> {
 type PaperProps = {
     paper: Newspaper;
     isSummary: boolean;
+    onAction?: (art: Article) => void;
 }
 
 class PaperC extends React.Component<PaperProps> {
     render() {
         return (
             <div className="paper">
-                <ArticlesC articles={this.props.paper.articles} />
+                <ArticlesC articles={this.props.paper.articles}
+                    articleState={ArticleState.STAGED}
+                    onAction={this.props.onAction}
+                />
             </div>
         );
     }
 }
 
-type NextEditionProps = {
-    paper: Newspaper;
-}
-
-class NextEditionC extends React.Component<NextEditionProps> {
+class NextEditionC extends React.Component<AppProps> {
     render() {
         return (
             <div className="currentPaper section">
                 <h1>Next Edition</h1>
-                <PaperC paper={this.props.paper} isSummary={false} />
+                <PaperC paper={this.props.world.nextEdition}
+                    isSummary={false}
+                    onAction={(art) => this.props.world.removeArticleFromCurrent(art)}
+                />
             </div>
         );
     }
-}
-
-type AppProps = {
-    world: World;
 }
 
 type StatProps = {
@@ -179,8 +238,8 @@ class Game extends React.Component<AppProps, {}> {
         return (
             <div className="game">
                 <EmployedAuthorsC authors={this.props.world.employedAuthors} />
-                <PendingArticlesC articles={this.props.world.pendingArticles} />
-                <NextEditionC paper={this.props.world.nextEdition} />
+                <PendingArticlesC world={this.props.world} />
+                <NextEditionC world={this.props.world} />
                 <StatsC world={this.props.world} />
             </div>
         );
