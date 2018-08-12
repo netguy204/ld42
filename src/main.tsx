@@ -47,9 +47,22 @@ type ProgressBarProps = {
     timer: Timer;
 }
 
-class TimeRunningOutBar extends React.Component<ProgressBarProps> {
+class RunningOutBar extends React.Component<ProgressBarProps> {
     render() {
         let ratio = this.props.timer.ticksRemaining / this.props.timer.startTicks;
+        let style = {width: `${ratio*100}%`};
+
+        return (
+            <div className="barFrame">
+                <div className="barFill" style={style}></div>
+            </div>
+        );
+    }
+}
+
+class FillingUpBar extends React.Component<ProgressBarProps> {
+    render() {
+        let ratio = 1 - (this.props.timer.ticksRemaining / this.props.timer.startTicks);
         let style = {width: `${ratio*100}%`};
 
         return (
@@ -72,7 +85,7 @@ class AuthorC extends React.Component<AuthorProps> {
                 <div className="rows">
                     <div className="name">{this.props.author.name}</div>
                     <TouchstonesC touchstones={this.props.author.instances} />
-                    <TimeRunningOutBar timer={this.props.author.articleTimer} />
+                    <FillingUpBar timer={this.props.author.articleTimer} />
                 </div>
             </div>
         );
@@ -121,7 +134,7 @@ class ArticleC extends React.Component<ArticleProps> {
                 </button>
             )
 
-            pendingTimer = <TimeRunningOutBar timer={this.props.article.pendingTimer} />;
+            pendingTimer = <RunningOutBar timer={this.props.article.pendingTimer} />;
         }
 
         let fromStagedButton = null;
@@ -218,6 +231,7 @@ class NextEditionC extends React.Component<AppProps> {
         return (
             <div className="currentPaper section">
                 <h1>Next Edition</h1>
+                <RunningOutBar timer={this.props.world.nextEditionTimer} />
                 <PaperC paper={this.props.world.nextEdition}
                     isSummary={false}
                     onAction={(art) => this.props.world.removeArticleFromCurrent(art)}

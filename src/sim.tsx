@@ -260,6 +260,7 @@ export class WorldEvent {
 export let Constants = {
     TicksPerNewscycle: 10,
     TicksPerSecond: 10,
+    NewpapersInPublicMemory: 4,
 };
 
 export class World {
@@ -269,6 +270,7 @@ export class World {
     pendingArticles: Article[];
 
     nextEdition: Newspaper;
+    nextEditionTimer: Timer;
     publicMemory: Newspaper[];
 
     moneyInBank: number;
@@ -283,6 +285,7 @@ export class World {
         this.availableAuthors = [];
         this.pendingArticles = [];
         this.nextEdition = new Newspaper([]);
+        this.nextEditionTimer = new Timer(Constants.TicksPerNewscycle);
         this.publicMemory = [];
         this.moneyInBank = 5000;
         this.currentSubscribers = 1000;
@@ -343,6 +346,19 @@ export class World {
         toRemove.forEach((article) => {
             this.pendingArticles.splice(this.pendingArticles.indexOf(article), 1);
         })
+
+        // see if the current edition is timed out
+        if (this.nextEditionTimer.tick()) {
+            this.nextEditionTimer.reset();
+
+            // add this, dropping off oldest if necessary
+            this.publicMemory.push(this.nextEdition);
+            if (this.publicMemory.length > Constants.NewpapersInPublicMemory) {
+                this.publicMemory.splice(0, 1);
+            }
+
+            this.nextEdition = new Newspaper([]);
+        }
         this.transferReadyArticles();
     }
     // authors can quit if you don't publish enough of their articles
