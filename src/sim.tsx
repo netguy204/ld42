@@ -483,6 +483,8 @@ export class World {
 
             this.nextEdition = new Newspaper([]);
         }
+
+        this.aWildApplicantAppeared();
     }
 
     /*

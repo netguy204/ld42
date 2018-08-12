@@ -101,31 +101,49 @@ class FillingUpBar extends React.Component<ProgressBarProps> {
 
 type AuthorProps = {
     author: Author;
+    onHire?: () => void;
+    onFire?: () => void;
 }
 
 class AuthorC extends React.Component<AuthorProps> {
     render() {
+        let hireButton: any = null;
+        if (this.props.onHire != null) {
+            hireButton = (
+                <button onClick={this.props.onHire}>
+                    <i className="fas fa-chevron-left"></i>
+                </button>
+            );
+        }
+
+        let fireButton: any = null;
+        if (this.props.onFire != null) {
+            fireButton = (
+                <button className="rightJustify" onClick={this.props.onFire}>
+                    <i className="fas fa-chevron-right"></i>
+                </button>
+            );
+        }
         return (
             <div className="author">
+                {hireButton}
                 <i className="far fa-address-book avatar" />
                 <div className="rows">
                     <div className="name">{this.props.author.name}</div>
                     <TouchstonesC touchstones={this.props.author.instances} />
                     <FillingUpBar timer={this.props.author.articleTimer} />
                 </div>
+                {fireButton}
             </div>
         );
     }
 }
 
-type AuthorsProps = {
-    authors: Author[];
-}
-
-class EmployedAuthorsC extends React.Component<AuthorsProps> {
+class EmployedAuthorsC extends React.Component<AppProps> {
     render() {
-        let authors = this.props.authors.map((auth) => {
-            return <AuthorC key={auth.name} author={auth} />
+        let authors = this.props.world.employedAuthors.map((auth) => {
+            let fire = () => this.props.world.fire(auth);
+            return <AuthorC key={auth.name} author={auth} onFire={fire} />
         });
         return (
             <div className="employedAuthors section">
@@ -338,6 +356,20 @@ class ConsoleC extends React.Component<AppProps> {
     }
 }
 
+class AvailableAuthorsC extends React.Component<AppProps> {
+    render() {
+        let authors = this.props.world.availableAuthors.map((auth) => {
+            let hire = () => this.props.world.hire(auth);
+            return <AuthorC key={auth.name} author={auth} onHire={hire} />
+        });
+        return (
+            <div className="availableAuthors">
+                {authors}
+            </div>
+        );
+    }
+}
+
 class StatsC extends React.Component<AppProps> {
     render() {
         let money = `\$${numbro(this.props.world.moneyInBank).format({average: true})}`;
@@ -348,6 +380,11 @@ class StatsC extends React.Component<AppProps> {
                 <div className="statGroup">
                     <h1>Public Memory</h1>
                     <PublicMemory papers={this.props.world.publicMemory} />
+                </div>
+
+                <div className="statGroup">
+                    <h1>Available Authors</h1>
+                    <AvailableAuthorsC world={this.props.world} />
                 </div>
 
                 <div className="statGroup">
@@ -443,7 +480,7 @@ class Game extends React.Component<AppProps, {}> {
         return (
             <div className="gameRows">
                 <div className="gameColumns">
-                    <EmployedAuthorsC authors={this.props.world.employedAuthors} />
+                    <EmployedAuthorsC world={this.props.world} />
                     <PendingArticlesC world={this.props.world} />
                     <NextEditionC world={this.props.world} />
                     <StatsC world={this.props.world} />
