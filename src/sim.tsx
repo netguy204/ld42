@@ -381,4 +381,3 @@ export class World {
     // authors can quit if you don't publish enough of their articles
 }
 
-
