@@ -1,7 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import {World, Author, TouchstoneInstance, Constants, Newspaper, Article} from './sim';
-import { tickStep, Timer } from '../node_modules/@types/d3/index';
+import {World, Author, TouchstoneInstance, Constants, Newspaper, Article, Timer} from './sim';
 
 type TouchstoneProps = {
     touchstone: TouchstoneInstance;
@@ -44,6 +43,23 @@ class TouchstonesC extends React.Component<TouchstonesProps> {
     }
 }
 
+type ProgressBarProps = {
+    timer: Timer;
+}
+
+class TimeRunningOutBar extends React.Component<ProgressBarProps> {
+    render() {
+        let ratio = this.props.timer.ticksRemaining / this.props.timer.startTicks;
+        let style = {width: `${ratio*100}%`};
+
+        return (
+            <div className="barFrame">
+                <div className="barFill" style={style}></div>
+            </div>
+        );
+    }
+}
+
 type AuthorProps = {
     author: Author;
 }
@@ -56,6 +72,7 @@ class AuthorC extends React.Component<AuthorProps> {
                 <div className="rows">
                     <div className="name">{this.props.author.name}</div>
                     <TouchstonesC touchstones={this.props.author.instances} />
+                    <TimeRunningOutBar timer={this.props.author.articleTimer} />
                 </div>
             </div>
         );
@@ -96,12 +113,15 @@ type ArticleProps = {
 class ArticleC extends React.Component<ArticleProps> {
     render() {
         let toStagedButton = null;
+        let pendingTimer = null;
         if (this.props.articleState == ArticleState.PENDING) {
             toStagedButton = (
                 <button className="rightJustify" onClick={this.props.onAction}>
                     <i className="fas fa-chevron-right"></i>
                 </button>
             )
+
+            pendingTimer = <TimeRunningOutBar timer={this.props.article.pendingTimer} />;
         }
 
         let fromStagedButton = null;
@@ -112,6 +132,7 @@ class ArticleC extends React.Component<ArticleProps> {
                 </button>
             );
         }
+
         return (
             <div className="article">
                 {fromStagedButton}
@@ -119,6 +140,7 @@ class ArticleC extends React.Component<ArticleProps> {
                 <div className="rows">
                     <span className="headline">{this.props.article.headline}</span>
                     <TouchstonesC touchstones={this.props.article.instances} /> 
+                    {pendingTimer}
                 </div>
                 {toStagedButton}
             </div>

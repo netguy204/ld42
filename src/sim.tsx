@@ -9,7 +9,7 @@ function randomBetween(min: number, max: number) {
     return min + Math.floor(Math.random() * span);
 }
 
-class Timer {
+export class Timer {
     ticksRemaining: number;
     startTicks: number;
 
