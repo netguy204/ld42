@@ -213,9 +213,19 @@ export class Newspaper {
 }
 
 export class Population extends TouchstoneBag {
-    loyalty: number;
+    name: string;
+    loyalty: number; // -1 to 1, -1 most displeased. 1 is estatic
     subscriberRatio: number; // 0-1, what percentage subscribe?
     largeness: number; // 0-1, how many from teeny tiny to massive
+
+    constructor(touchstones: TouchstoneInstance[], name: string, largeness: number) {
+        super(touchstones);
+
+        this.name = name;
+        this.loyalty = 0;
+        this.subscriberRatio = 0;
+        this.largeness = largeness;
+    }
 
     score(paper: Newspaper): number {
         let total = 0;
@@ -263,6 +273,8 @@ export let Constants = {
     NewpapersInPublicMemory: 4,
 };
 
+let populationNameGen = NameGen.compile("sV'i");
+
 export class World {
     employedAuthors: Author[];
     availableAuthors: Author[];
@@ -293,6 +305,11 @@ export class World {
         this.populations = [];
 
         this.employedAuthors.push(Author.random(3));
+        this.populations.push(new Population(
+            TouchstoneLibrary.draw(1).instances,
+            populationNameGen.toString(),
+            Math.random() / 2 + 0.5
+        ))
     }
 
     hire(author: Author): void {

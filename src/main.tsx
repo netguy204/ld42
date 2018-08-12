@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import {World, Author, TouchstoneInstance, Constants, Newspaper, Article, Timer} from './sim';
+import {World, Author, TouchstoneInstance, Constants, Newspaper, Article, Timer, Population} from './sim';
 import * as numbro from 'numbro';
 
 type TouchstoneProps = {
@@ -318,14 +318,90 @@ class StatsC extends React.Component<AppProps> {
     }
 }
 
+type PopulationProps = {
+    population: Population;
+    style?: {};
+}
+
+class SubscriberRatioC extends React.Component<PopulationProps> {
+    render() {
+        let ratio = this.props.population.subscriberRatio;
+        let style = {width: `${ratio*100}%`};
+
+        return (
+            <div className="barFrame">
+                <div className="barFill" style={style}></div>
+            </div>
+        );
+    }
+}
+
+class PopulationC extends React.Component<PopulationProps> {
+    render() {
+        let icon = "fa-meh";
+        if (this.props.population.loyalty < -.3) {
+            icon = "fa-frown";
+        }
+        if (this.props.population.loyalty < -.5) {
+            icon = "fa-angry";
+        }
+        if (this.props.population.loyalty < -.7) {
+            icon = "fa-dizzy";
+        }
+
+        if (this.props.population.loyalty > .3) {
+            icon = "fa-grin-alt";
+        }
+        if (this.props.population.loyalty > .5) {
+            icon = "fa-smile-wink";
+        }
+        if (this.props.population.loyalty > .7) {
+            icon = "fa-grin-hearts";
+        }
+
+        return (
+            <div className="population" style={this.props.style}>
+                <div className="rows">
+                    <div className="name">{this.props.population.name}</div>
+                    <TouchstonesC touchstones={this.props.population.instances} />
+                    <SubscriberRatioC population={this.props.population} />
+                </div>
+            </div>
+        );
+    }
+}
+
+class RegionsC extends React.Component<AppProps> {
+    render() {
+        let totalLargeness = 0;
+        this.props.world.populations.forEach((pop) => {
+            totalLargeness += pop.largeness;
+        });
+
+        let populations = this.props.world.populations.map((pop) => {
+            let ratio = pop.largeness / totalLargeness;
+            let style = {width: `${ratio*100}%`};
+            return <PopulationC population={pop} style={style} />;
+        });
+        return (
+            <div className="regions">
+                {populations}
+            </div>
+        );
+    }
+}
+
 class Game extends React.Component<AppProps, {}> {
     render() {
         return (
-            <div className="game">
-                <EmployedAuthorsC authors={this.props.world.employedAuthors} />
-                <PendingArticlesC world={this.props.world} />
-                <NextEditionC world={this.props.world} />
-                <StatsC world={this.props.world} />
+            <div className="gameRows">
+                <div className="gameColumns">
+                    <EmployedAuthorsC authors={this.props.world.employedAuthors} />
+                    <PendingArticlesC world={this.props.world} />
+                    <NextEditionC world={this.props.world} />
+                    <StatsC world={this.props.world} />
+                </div>
+                <RegionsC world={this.props.world} />
             </div>
         );
     }
