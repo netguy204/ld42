@@ -310,6 +310,7 @@ export let Constants = {
     TicksPerNewscycle: 10,
     TicksPerSecond: 2,
     NewpapersInPublicMemory: 4,
+    MaxLogMessages: 20,
 };
 
 let populationNameGen = NameGen.compile("sV'i");
@@ -331,6 +332,8 @@ export class World {
 
     populations: Population[];
 
+    logMessages: string[];
+
     constructor() {
         this.employedAuthors = [];
         this.availableAuthors = [];
@@ -342,6 +345,7 @@ export class World {
         this.currentSubscribers = 1000;
         this.currentEvents = [];
         this.populations = [];
+        this.logMessages = [];
 
         let traits: TouchstoneBag|null = null;
         for (let i = 0; i < 5; i++) {
@@ -356,6 +360,8 @@ export class World {
 
         let author = new Author((traits as TouchstoneBag).instances, Constants.TicksPerNewscycle/2, "Susy Joe");
         this.employedAuthors.push(author);
+
+        this.addLog("Welcome to Sim Tabloid!");
     }
 
     hire(author: Author): void {
@@ -369,13 +375,20 @@ export class World {
         this.employedAuthors.splice(iToRemove, 1);
     }
 
+    // add a message to the log
+    addLog(message: string): void {
+        this.logMessages.push(message);
+        if (this.logMessages.length > Constants.MaxLogMessages) {
+            this.logMessages.splice(0, 1);
+        }
+    }
+
     addArticleToCurrent(article: Article): void {
         // remove from old
         this.pendingArticles.splice(this.pendingArticles.indexOf(article), 1);
 
         // add to new
         this.nextEdition.articles.push(article);
-        
     }
 
     removeArticleFromCurrent(article: Article): void {

@@ -292,11 +292,24 @@ type StatProps = {
 class StatRowC extends React.Component<StatProps> {
     render() {
         return (
-            <div className="row">
+            <div className="statRow">
                 <span className="title">{this.props.name}</span>
                 <span className="value">{this.props.value}</span>
             </div>
         )
+    }
+}
+
+class ConsoleC extends React.Component<AppProps> {
+    render() {
+        let logLines = this.props.world.logMessages.map((line) => {
+            return <div className="logLine">{line}</div>;
+        });
+        return (
+            <div className="logMessages rows">
+                {logLines}
+            </div>
+        );
     }
 }
 
@@ -307,12 +320,21 @@ class StatsC extends React.Component<AppProps> {
 
         return (
             <div className="stats section">
-                <h1>Public Memory</h1>
-                <PublicMemory papers={this.props.world.publicMemory} />
+                <div className="statGroup">
+                    <h1>Public Memory</h1>
+                    <PublicMemory papers={this.props.world.publicMemory} />
+                </div>
 
-                <h1>Stats</h1>
-                <StatRowC name="Money" value={money} />
-                <StatRowC name="Subscribers" value={subscribers} />
+                <div className="statGroup">
+                    <h1>Stats</h1>
+                    <StatRowC name="Money" value={money} />
+                    <StatRowC name="Subscribers" value={subscribers} />
+                </div>
+
+                <div className="statGroup">
+                    <h1>Log</h1>
+                    <ConsoleC world={this.props.world} />
+                </div>
             </div>
         );
     }
