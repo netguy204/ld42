@@ -14,7 +14,7 @@ export class Timer {
     startTicks: number;
 
     constructor(startTicks: number) {
-        this.startTicks = startTicks;
+        this.startTicks = 80 //startTicks;
         this.ticksRemaining = startTicks;
     }
 
@@ -138,6 +138,7 @@ export class Author extends TouchstoneBag {
     numWrittenLastInterval: number; // how many articles they've produce in the last interval
     numPublishedLastInterval: number; // how many of their articles we've published
     name: string;
+    salary: number;
 
     constructor(touchstones: TouchstoneInstance[], ticksPerArticle: number, name: string) {
         super(touchstones);
@@ -146,10 +147,11 @@ export class Author extends TouchstoneBag {
         this.numWrittenLastInterval = 0;
         this.numPublishedLastInterval = 0;
         this.name = name;
+        this.salary = 1500000 / ticksPerArticle;
     }
 
-    static random(touchstones: number): Author {
-        let traits = TouchstoneLibrary.draw(touchstones);
+    static random(): Author {
+        let traits = TouchstoneLibrary.draw(randomBetween(1, 4));
         let ticksPerArticle = randomBetween(4, 20);
         let name = authorNameGen.toString();
         return new Author(traits.instances, ticksPerArticle, name);
@@ -181,9 +183,11 @@ export class Author extends TouchstoneBag {
 export class Article extends TouchstoneBag {
     headline: string;
     pendingTimer: Timer;
+    coveredTopics: TouchstoneInstance[];
 
     constructor(instances: TouchstoneInstance[], headline: string, timeout: number) {
         super(instances);
+        this.coveredTopics = instances;
         this.headline = headline;
         this.pendingTimer = new Timer(timeout);
     }
@@ -217,10 +221,12 @@ export class Population extends TouchstoneBag {
     loyalty: number; // -1 to 1, -1 most displeased. 1 is estatic
     subscriberRatio: number; // 0-1, what percentage subscribe?
     largeness: number; // 0-1, how many from teeny tiny to massive
+    topics: TouchstoneInstance[];
 
     constructor(touchstones: TouchstoneInstance[], name: string, largeness: number) {
         super(touchstones);
 
+        this.topics = touchstones;
         this.name = name;
         this.loyalty = 0;
         this.subscriberRatio = 0;
@@ -251,6 +257,27 @@ export class Population extends TouchstoneBag {
         }
 
         return total;
+    }
+
+    getSubscriberCount(publicMemory: Newspaper[]): number {
+        let size = this.largeness * 10000;
+        let subCount = 0;
+
+        publicMemory.forEach(paper => {
+            paper.articles.forEach(article => {
+                article.coveredTopics.forEach(topic => {
+                    for (let i = 0; i < this.topics.length; i++) {
+                        if (topic.equals(this.topics[i])) {
+                            subCount++;
+                        }
+                    }
+                });
+            });
+        });
+
+        this.subscriberRatio = subCount / this.topics.length;
+
+        return size * this.subscriberRatio;
     }
 
     judge(paper: Newspaper) {
@@ -304,7 +331,7 @@ export class World {
         this.currentEvents = [];
         this.populations = [];
 
-        this.employedAuthors.push(Author.random(3));
+        this.employedAuthors.push();
         this.populations.push(new Population(
             TouchstoneLibrary.draw(1).instances,
             populationNameGen.toString(),
@@ -314,6 +341,8 @@ export class World {
 
     hire(author: Author): void {
         this.employedAuthors.push(author);
+        let iToRemove = this.availableAuthors.indexOf(author)
+        this.availableAuthors.splice(iToRemove, 1);
     }
 
     fire(author: Author): void {
@@ -327,6 +356,7 @@ export class World {
 
         // add to new
         this.nextEdition.articles.push(article);
+        
     }
 
     removeArticleFromCurrent(article: Article): void {
@@ -337,8 +367,40 @@ export class World {
         this.pendingArticles.push(article);
     }
 
-    transferReadyArticles() {
+    aWildApplicantAppeared(): void {
+        if (randomBetween(0, 1) == 1) {
+            this.availableAuthors.push();
+        }
+    }
 
+    getCycleIncome(): number {
+        let cycleIncome = 0;
+
+        this.populations.forEach(pop => {
+            cycleIncome += pop.getSubscriberCount(this.publicMemory) * 16; //16 is an arbirary number to make the income not look so round & even
+        });
+
+        return cycleIncome;
+    }
+    getCycleSubscribers(): number {
+        let cycleSubs = 0;
+
+        this.populations.forEach(pop => {
+            cycleSubs += pop.getSubscriberCount(this.publicMemory)
+        });
+
+        return cycleSubs;
+    }
+
+    getCycleExpenses(): number {
+        let salaries = 0;
+        let utilities = randomBetween(142, 433);
+
+        this.employedAuthors.forEach(author => {
+            salaries += author.salary;
+        });
+
+        return (salaries / 365) + utilities;
     }
 
     tick(): void {
@@ -374,10 +436,15 @@ export class World {
                 this.publicMemory.splice(0, 1);
             }
 
+            this.moneyInBank += this.getCycleIncome();
+            this.moneyInBank -= this.getCycleExpenses();
+
+            this.currentSubscribers = this.getCycleSubscribers();
+
             this.nextEdition = new Newspaper([]);
         }
-        this.transferReadyArticles();
     }
     // authors can quit if you don't publish enough of their articles
 }
+
 
