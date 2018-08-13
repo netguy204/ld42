@@ -381,7 +381,10 @@ class StatRowC extends React.Component<StatProps> {
 
 class ConsoleC extends React.Component<AppProps> {
     render() {
-        let logLines = this.props.world.logMessages.map((line) => {
+        let messages = this.props.world.logMessages.concat();
+        messages.reverse();
+
+        let logLines = messages.map((line) => {
             return <div className="logLine" key={line}>{line}</div>;
         });
         return (
@@ -395,8 +398,14 @@ class ConsoleC extends React.Component<AppProps> {
 
 class StatsC extends React.Component<AppProps> {
     render() {
-        let money = `\$${numbro(this.props.world.moneyInBank).format({average: true})}`;
-        let subscribers = numbro(this.props.world.numSubscribers()).format({average: true});
+        let formatAvg = (num: number) => numbro(num).format({average: true});
+        let formatMoney = (num: number) => `\$${formatAvg(num)}`;
+        let money = formatMoney(this.props.world.moneyInBank);
+        let subscribers = formatAvg(this.props.world.numSubscribers());
+        let salaries = formatMoney(this.props.world.lastEditionSalaries);
+        let commisions = formatMoney(this.props.world.lastEditionArticleCost);
+        let lastIncome = formatMoney(this.props.world.lastEditionIncome);
+        let newSubscribers = formatAvg(this.props.world.lastEditionSubChange);
 
         return (
             <div className="stats section">
@@ -407,8 +416,12 @@ class StatsC extends React.Component<AppProps> {
 
                 <div className="statGroup">
                     <h1>Stats</h1>
-                    <StatRowC name="Money" value={money} />
+                    <StatRowC name="New Subscribers" value={newSubscribers} />
                     <StatRowC name="Subscribers" value={subscribers} />
+                    <StatRowC name="Salaries" value={salaries} />
+                    <StatRowC name="Commisions" value={commisions} />
+                    <StatRowC name="Sales" value={lastIncome} />
+                    <StatRowC name="Money" value={money} />
                 </div>
 
                 <div className="statGroup">

@@ -314,10 +314,10 @@ export let Constants = {
     TicksPerNewscycle: 10,
     TicksPerSecond: 2,
     NewpapersInPublicMemory: 4,
-    MaxLogMessages: 20,
+    MaxLogMessages: 4,
     MaxApplicants: 1,
     MaxPendingArticles: 3,
-    IncomePerPaper: 0.59,
+    IncomePerPaper: 0.79,
     BaselineSalaryPerNewscycle: 2000,
     StartingSubscribers: 1000,
     CostPerArticle: 1000,
@@ -343,6 +343,11 @@ export class World {
 
     logMessages: string[];
 
+    lastEditionSalaries: number;
+    lastEditionArticleCost: number;
+    lastEditionIncome: number;
+    lastEditionSubChange: number;
+
     constructor() {
         this.employedAuthors = [];
         this.availableAuthors = [];
@@ -354,6 +359,10 @@ export class World {
         this.currentEvents = [];
         this.populations = [];
         this.logMessages = [];
+        this.lastEditionSalaries = 0;
+        this.lastEditionArticleCost = 0;
+        this.lastEditionIncome = 0;
+        this.lastEditionSubChange = 0;
 
         for (let i = 0; i < 5; i++) {
             this.populations.push(Population.random());
@@ -418,16 +427,17 @@ export class World {
         return subscribers;
     }
 
-    getCycleIncome(): number {
+    updateCycleIncome(): void {
         // subscribers don't pay for a missing paper
         if (this.nextEdition.articles.length == 0) {
-            return 0;
+            this.lastEditionIncome = 0;
+        } else {
+            this.lastEditionIncome = this.numSubscribers() * Constants.IncomePerPaper; 
         }
-
-        return this.numSubscribers() * Constants.IncomePerPaper;
+        this.moneyInBank += this.lastEditionIncome;
     }
 
-    getCycleExpenses(): number {
+    updateCycleExpenses(): void {
         let salaries = 0;
         let utilities = randomBetween(142, 433);
         let commissions = 0;
@@ -435,33 +445,44 @@ export class World {
         this.employedAuthors.forEach(author => {
             salaries += author.salary();
         });
+        this.lastEditionSalaries = salaries;
 
         // pay for each of our articles
         this.nextEdition.articles.forEach((article) => {
             commissions += Constants.CostPerArticle;
         })
+        this.lastEditionArticleCost = commissions;
 
-        return salaries + utilities + commissions;
+        this.moneyInBank -= (salaries + utilities + commissions);
     }
 
     updateSubscribers(): void {
+        let deltaSubscribers = 0;
+
         this.populations.forEach((pop) => {
             let loyalty = pop.loyalty(this.publicMemory);
+            let prevSubscribers = pop.numSubscribers;
+            let nextSubscribers = pop.numSubscribers;
+
             pop.lastLoyalty = loyalty;
             if (loyalty < 0) {
-                pop.numSubscribers -= (pop.numSubscribers * Math.abs(loyalty));
+                nextSubscribers -= (pop.numSubscribers * Math.abs(loyalty));
             }
             if (loyalty > 0) {
-                pop.numSubscribers += (pop.numNonSubscribers() * loyalty);
+                nextSubscribers += (pop.numNonSubscribers() * loyalty);
             }
             if (loyalty == 0) {
                 // meh is bad
-                pop.numSubscribers *= 0.9;
+                nextSubscribers -= pop.numNonSubscribers() * 0.1;
             }
 
             // make sure the answer is in a reasonable bound
-            pop.numSubscribers = Math.max(0, Math.min(pop.totalPopulation, pop.numSubscribers));
+            nextSubscribers = Math.max(0, Math.min(pop.totalPopulation, nextSubscribers));
+            deltaSubscribers += (nextSubscribers - prevSubscribers);
+            pop.numSubscribers = nextSubscribers;
         });
+
+        this.lastEditionSubChange = Math.floor(deltaSubscribers);
     }
 
     tick(): void {
@@ -501,8 +522,8 @@ export class World {
                 this.publicMemory.splice(0, 1);
             }
 
-            this.moneyInBank += this.getCycleIncome();
-            this.moneyInBank -= this.getCycleExpenses();
+            this.updateCycleIncome();
+            this.updateCycleExpenses();
 
             // we get/lose subscribers after we get our income this cycle
             this.updateSubscribers();
