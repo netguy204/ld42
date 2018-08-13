@@ -5,13 +5,18 @@ import * as numbro from 'numbro';
 import Hotkeys from 'react-hot-keys';
 
 type InfoProps = {
+    modifier?: string;
 }
 
 class InfoIcon extends React.Component<InfoProps> {
     render() {
+        let modifier = "";
+        if (this.props.modifier != null) {
+            modifier = this.props.modifier;
+        }
         return (
             <i className="infoIcon fas fa-info-circle tooltip">
-                <div className="tooltiptext">
+                <div className={"tooltiptext " + modifier}>
                     {this.props.children}
                 </div>
             </i>
@@ -534,7 +539,7 @@ class StatsC extends React.Component<AppProps> {
                 <div className="statGroup">
                     <div className="header">
                         <h1>Public Memory</h1>
-                        <InfoIcon>
+                        <InfoIcon modifier="shiftLeft">
                             <section>
                                 These are your works that the public remembers. Each region will
                                 base their feelings about you on these works and their content.
