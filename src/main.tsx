@@ -730,22 +730,26 @@ enum GameState {
     BOOT,
     RUNNING,
     PAUSED,
-    OVER
+    WIN,
+    LOSE
 }
 
-type StartProps = {
-    onStart: () => void;
+type MenuProps = {
+    onAction: () => void;
 }
 
-class StartMenu extends React.Component<StartProps> {
+class StartMenu extends React.Component<MenuProps> {
     render() {
         return (
             <div className="instructions">
-                <button onClick={this.props.onStart}>Start</button>
+                <button onClick={this.props.onAction}>Start</button>
                 <section>
                     <u>You are the editor</u> of a small-town newspaper. You start with one author who
                     appeals to a small local population. Decide which of their articles to publish,
                     hire new authors, and expand your subscriber base to take over your region.
+                </section>
+                <section>
+                    <u>Try to make $100k.</u> You'll need to be careful about who you hire to acheive this.
                 </section>
                 <section>
                     <u>Pay attention to your bank account.</u> If you run out of money your newspaper will close.
@@ -758,9 +762,43 @@ class StartMenu extends React.Component<StartProps> {
         );
     }
 }
+
+class LoseMenu extends React.Component<MenuProps> {
+    render() {
+        //<button onClick={this.props.onAction}>Try Again</button>
+        return (
+            <div className="instructions">
+                <h1>Game Over</h1>
+                <section>
+                    You ran out of money and your newspaper closed its doors. Any
+                    authors in your employ are now looking for work again. Don't worry,
+                    they're used to that.
+                </section>
+            </div>
+        )
+    }
+}
+
+class WinMenu extends React.Component<MenuProps> {
+    render() {
+        //<button onClick={this.props.onAction}>Do Even Better...</button>
+        return (
+            <div className="instructions">
+                <h1>Success!</h1>
+                <section>
+                    You've expanded your paper and seem to be on solid financial footing.
+                    Well done! You'll be an empire in no time.
+                </section>
+            </div>
+        )
+    }
+}
 type AppState = {
     gameState: GameState;
 }
+
+let myWindow = window as any;
+myWindow.world = new World();
 
 class App extends React.Component<AppProps, AppState> {
     timer: any;
@@ -780,15 +818,26 @@ class App extends React.Component<AppProps, AppState> {
     }
 
     componentDidMount() {
+        let rendersPerTick = 2;
         let tickPeriod = 1000.0 / Constants.TicksPerSecond;
+
         // game loop
+        let renderCount = 0;
         let updateAndRender = () => {
-            if (this.state.gameState == GameState.RUNNING) {
-                myWindow.world.tick();
+            let world = (myWindow.world as World);
+            if ((renderCount % rendersPerTick) == 0 && this.state.gameState == GameState.RUNNING) {
+                world.tick();
             }
 
-            this.setState((prev) => ({...prev}));
-            this.timer = setTimeout(updateAndRender, tickPeriod);
+            if (world.moneyInBank <= 0) {
+                this.setState({gameState: GameState.LOSE});
+            } else if (myWindow.world.moneyInBank >= 100000) {
+                this.setState({gameState: GameState.WIN});
+            } else {
+                this.setState((prev) => ({...prev}));
+            }
+            this.timer = setTimeout(updateAndRender, tickPeriod/rendersPerTick);
+            renderCount += 1;
         }
         updateAndRender();
     }
@@ -801,8 +850,17 @@ class App extends React.Component<AppProps, AppState> {
     }
 
     render() {
+        let onReset = () => {
+            myWindow.world = new World();
+            this.setState({gameState: GameState.BOOT});
+        }
+
         if (this.state.gameState == GameState.BOOT) {
-            return <StartMenu onStart={() => this.startGame()}></StartMenu>;
+            return <StartMenu onAction={() => this.startGame()}></StartMenu>;
+        } else if(this.state.gameState == GameState.LOSE) {
+            return <LoseMenu onAction={onReset} />
+        } else if(this.state.gameState == GameState.WIN) {
+            return <WinMenu onAction={onReset} />
         } else {
             let pauseActionName = 'Pause';
             if (this.state.gameState == GameState.PAUSED) {
@@ -835,8 +893,6 @@ class App extends React.Component<AppProps, AppState> {
     }
 }
 
-let myWindow = window as any;
-myWindow.world = new World();
 
 ReactDOM.render(
     <App world={myWindow.world}></App>,
