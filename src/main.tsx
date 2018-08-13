@@ -523,33 +523,87 @@ class SubscriberRatioC extends React.Component<PopulationProps> {
 }
 
 type LoyaltyProps = {
+    name: string;
     loyalty: number;
+}
+
+enum LoyaltyCategory {
+    MEH = "is indifferent towards you",
+
+    DISLIKE = "dislikes you",
+    ANGRY = "is angry about your work",
+    FURIOUS = "is furious about your work",
+
+    LIKE = "likes you",
+    PLEASED = "finds your work quite pleasing",
+    LOVE = "hangs on your every word"
+}
+
+function loyaltyCategory(loyalty: number): LoyaltyCategory {
+    let result = LoyaltyCategory.MEH;
+    if (loyalty < -.3) {
+        result = LoyaltyCategory.DISLIKE;
+    }
+    if (loyalty < -.5) {
+        result = LoyaltyCategory.ANGRY;
+    }
+    if (loyalty < -.7) {
+        result = LoyaltyCategory.FURIOUS;
+    }
+
+    if (loyalty > .3) {
+        result = LoyaltyCategory.LIKE;
+    }
+    if (loyalty > .5) {
+        result = LoyaltyCategory.PLEASED;
+    }
+    if (loyalty > .7) {
+        result = LoyaltyCategory.LOVE;
+    }
+    return result;
 }
 
 class LoyaltyC extends React.Component<LoyaltyProps> {
     render() {
         let icon = "fa-meh";
-        if (this.props.loyalty < -.3) {
+        let loyalty = loyaltyCategory(this.props.loyalty);
+        switch(loyalty) {
+            case LoyaltyCategory.MEH:
+            icon = "fa-meh";
+            break;
+
+            case LoyaltyCategory.DISLIKE:
             icon = "fa-frown";
-        }
-        if (this.props.loyalty < -.5) {
+            break;
+
+            case LoyaltyCategory.ANGRY:
             icon = "fa-angry";
-        }
-        if (this.props.loyalty < -.7) {
+            break;
+
+            case LoyaltyCategory.FURIOUS:
             icon = "fa-dizzy";
-        }
+            break;
 
-        if (this.props.loyalty > .3) {
+            case LoyaltyCategory.LIKE:
             icon = "fa-grin-alt";
-        }
-        if (this.props.loyalty > .5) {
+            break;
+
+            case LoyaltyCategory.PLEASED:
             icon = "fa-smile-wink";
-        }
-        if (this.props.loyalty > .7) {
+            break;
+
+            case LoyaltyCategory.LOVE:
             icon = "fa-grin-hearts";
+            break;
         }
 
-        return <i className={"far loyalty " + icon}></i>;
+        return (
+            <i className={"tooltip far loyalty " + icon}>
+                <div className="tooltiptext">
+                    {this.props.name} {loyalty}
+                </div>
+            </i>
+        );
     }
 }
 class PopulationC extends React.Component<PopulationProps> {
@@ -560,7 +614,7 @@ class PopulationC extends React.Component<PopulationProps> {
                 <div className="rows">
                     <div className="name">
                         {this.props.population.name}
-                        <LoyaltyC loyalty={this.props.population.lastLoyalty} />
+                        <LoyaltyC loyalty={this.props.population.lastLoyalty} name={this.props.population.name} />
                     </div>
                     <TouchstonesC touchstones={this.props.population.instances} />
                     <SubscriberRatioC population={this.props.population} />
