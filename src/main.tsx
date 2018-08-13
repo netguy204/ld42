@@ -143,6 +143,15 @@ class EmployedAuthorC extends React.Component<AuthorProps> {
 
 class AvailableAuthorC extends React.Component<AuthorProps> {
     render() {
+        let actionButton: any = null;
+        if (this.props.onAction != null) {
+            actionButton = <button onClick={this.props.onAction}>
+                <span className="vertical">
+                    Hire
+                </span>
+            </button>
+        }
+
         return (
             <div className="author">
                 <i className="far fa-address-book avatar" />
@@ -151,15 +160,26 @@ class AvailableAuthorC extends React.Component<AuthorProps> {
                     <TouchstonesC touchstones={this.props.author.instances} />
                     <RunningOutBar timer={this.props.author.hireTimer} />
                 </div>
-                <button onClick={this.props.onAction}>
-                    <span className="vertical">
-                        Hire
-                    </span>
-                </button>
+                {actionButton}
             </div>
         );
     }
 }
+
+class EmptyAuthorC extends React.Component<{}> {
+    render() {
+        return (
+            <div className="emptyAuthor">
+                <i className="far fa-address-book avatar" />
+                <div className="rows">
+                    <div className="name"></div>
+                </div>
+                <div className="overlay"></div>
+            </div>
+        );
+    }
+}
+
 
 class EmployedAuthorsC extends React.Component<AppProps> {
     render() {
@@ -167,9 +187,14 @@ class EmployedAuthorsC extends React.Component<AppProps> {
             let fire = () => this.props.world.fire(auth);
             return <EmployedAuthorC key={auth.name} author={auth} onAction={fire} />
         });
+        let blankAuthors: any[] = [];
+        for (let i = authors.length; i < Constants.MaxAuthors; i++) {
+            blankAuthors.push(<EmptyAuthorC key={i} />);
+        }
         return (
             <div className="employedAuthors">
                 {authors}
+                {blankAuthors}
             </div>
         );
     }
@@ -178,12 +203,23 @@ class EmployedAuthorsC extends React.Component<AppProps> {
 class AvailableAuthorsC extends React.Component<AppProps> {
     render() {
         let authors = this.props.world.availableAuthors.map((auth) => {
-            let hire = () => this.props.world.hire(auth);
+            let hire: any = null;
+            if (this.props.world.employedAuthors.length < Constants.MaxAuthors) {
+                hire = () => this.props.world.hire(auth);
+            }
+
             return <AvailableAuthorC key={auth.name} author={auth} onAction={hire} />
         });
+
+        let blankAuthors: any[] = [];
+        for (let i = authors.length; i < Constants.MaxApplicants; i++) {
+            blankAuthors.push(<EmptyAuthorC key={i} />);
+        }
+
         return (
             <div className="availableAuthors">
                 {authors}
+                {blankAuthors}
             </div>
         );
     }
@@ -277,6 +313,17 @@ class ArticleC extends React.Component<ArticleProps> {
     }
 }
 
+class EmptyArticleC extends React.Component<{}> {
+    render() {
+        return (
+            <div className="emptyArticle">
+                <i className="icon far fa-file-alt"></i>
+                <div className="overlay"></div>
+            </div>
+        );
+    }
+}
+
 type ArticlesProps = {
     articles: Article[];
     articleState: ArticleState;
@@ -311,6 +358,11 @@ type AppProps = {
 
 class PendingArticlesC extends React.Component<AppProps> {
     render() {
+        let missing: any[] = [];
+        for (let i = this.props.world.pendingArticles.length; i < Constants.MaxPendingArticles; ++i) {
+            missing.push(<EmptyArticleC key={i} />);
+        }
+
         return (
             <div className="pendingArticles section">
                 <div className="header">
@@ -332,6 +384,7 @@ class PendingArticlesC extends React.Component<AppProps> {
                     articleState={ArticleState.PENDING}
                     onAction={(art) => this.props.world.addArticleToCurrent(art)}
                 />
+                {missing}
             </div>
         );
     }
@@ -358,6 +411,11 @@ class PaperC extends React.Component<PaperProps> {
 
 class NextEditionC extends React.Component<AppProps> {
     render() {
+        let missing: any[] = [];
+        for (let i = this.props.world.nextEdition.articles.length; i < Constants.MaxEditionArticles; ++i) {
+            missing.push(<EmptyArticleC key={i} />);
+        }
+
         return (
             <div className="currentPaper section">
                 <div className="header">
@@ -379,6 +437,7 @@ class NextEditionC extends React.Component<AppProps> {
                     isSummary={false}
                     onAction={(art) => this.props.world.removeArticleFromCurrent(art)}
                 />
+                {missing}
             </div>
         );
     }
@@ -648,11 +707,13 @@ class Game extends React.Component<AppProps, {}> {
     render() {
         return (
             <div className="gameRows">
-                <div className="gameColumns">
-                    <AuthorsC world={this.props.world} />
-                    <PendingArticlesC world={this.props.world} />
-                    <NextEditionC world={this.props.world} />
-                    <StatsC world={this.props.world} />
+                <div className="scrollWrapper">
+                    <div className="gameColumns">
+                        <AuthorsC world={this.props.world} />
+                        <PendingArticlesC world={this.props.world} />
+                        <NextEditionC world={this.props.world} />
+                        <StatsC world={this.props.world} />
+                    </div>
                 </div>
                 <RegionsC world={this.props.world} />
             </div>
@@ -677,15 +738,15 @@ class StartMenu extends React.Component<StartProps> {
             <div className="instructions">
                 <button onClick={this.props.onStart}>Start</button>
                 <section>
-                    <b>You are the editor</b> of a small-town newspaper. You start with one author who
+                    <u>You are the editor</u> of a small-town newspaper. You start with one author who
                     appeals to a small local population. Decide which of their articles to publish,
                     hire new authors, and expand your subscriber base to take over your region.
                 </section>
                 <section>
-                    <b>Pay attention to your bank account.</b> If you run out of money your newspaper will close.
+                    <u>Pay attention to your bank account.</u> If you run out of money your newspaper will close.
                 </section>
                 <section>
-                    <b>Press space to pause</b> so you can consider your moves. Press space again to unpause
+                    <u>Press space to pause</u> so you can consider your moves. Press space again to unpause
                     and see your decisions play out.
                 </section>
             </div>

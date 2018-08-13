@@ -2,261 +2,301 @@
     <link href="https://fonts.googleapis.com/css?family=Merriweather|Playfair+Display" rel="stylesheet">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ" crossorigin="anonymous">
 
-    <style>
-        body {
-            padding: 5px;
-            background-color: beige;
-            font-family: 'Playfair Display', serif; 
-        }
+    <head>
+        <title>
+            LD42
+        </title>
+        <style>
+            body {
+                padding: 5px;
+                background-color: beige;
+                font-family: 'Playfair Display', serif; 
+            }
 
-        .app {
-            width: 100%;
-            height: 100%;
-        }
+            .app {
+                width: 100%;
+                height: 100%;
+            }
 
-        .gameRows {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
+            .gameRows {
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+            }
 
-        .gameColumns {
-            display: flex;
-            flex-wrap: nowrap;
-            width: 100%;
-            flex: 2;
-            overflow: hidden;
-        }
+            .gameRows .scrollWrapper {
+                flex: 2;
+                width: 100%;
+                overflow: auto;
+            }
 
-        .regions {
-            display: flex;
-            flex-wrap: nowrap;
-            border-top: 1px solid bisque;
-            padding: 5px;
-            margin: 5px;
-        }
+            .gameColumns {
+                display: flex;
+                flex-wrap: nowrap;
+                width: 100%;
+                height: 100%;
+            }
 
-        .barFrame {
-            margin: 5px;
-            border: 1px solid black;
-            padding: 0px;
-            height: 10px;
-        }
+            .regions {
+                display: flex;
+                flex-wrap: nowrap;
+                border-top: 1px solid bisque;
+                padding: 5px;
+                margin: 5px;
+            }
 
-        .barFill {
-            margin: 0px;
-            padding: 0px;
-            height: 100%;
-            background-color: brown;
-        }
+            .barFrame {
+                margin: 5px;
+                border: 1px solid black;
+                padding: 0px;
+                height: 10px;
+            }
 
-        .section {
-            width: 30%;
-            height: 100%;
-            padding: 5px;
-        }
+            .barFill {
+                margin: 0px;
+                padding: 0px;
+                height: 100%;
+                background-color: brown;
+            }
 
-        .section h1 {
-            font-family: 'Merriweather', serif;
-        }
+            .section {
+                width: 30%;
+                height: 100%;
+                padding: 5px;
+            }
 
-        .employedAuthors {
-            border-right: 1px solid bisque;
-        }
+            .section h1 {
+                font-family: 'Merriweather', serif;
+            }
 
-        .employedAuthors .rows {
-            width: 100%;
-        }
+            .employedAuthors {
+                border-right: 1px solid bisque;
+            }
 
-        .pendingArticles {
-            border-right: 1px solid bisque;
-        }
+            .employedAuthors .rows {
+                width: 100%;
+            }
 
-        .currentPaper {
-            border-right: 1px solid bisque;
-        }
+            .pendingArticles {
+                border-right: 1px solid bisque;
+            }
 
-        .author {
-            display: flex;
-            flex-wrap: nowrap;
-            padding: 5px;
-            margin: 5px;
-            border: 1px solid bisque;
-            background-color: lightgoldenrodyellow;
-        }
+            .currentPaper {
+                border-right: 1px solid bisque;
+            }
 
-        .author .avatar {
-            color: brown;
-            font-size: 80px;
-            margin-right: 10px;
-        }
+            .author {
+                display: flex;
+                flex-wrap: nowrap;
+                padding: 5px;
+                margin: 5px;
+                border: 1px solid bisque;
+                background-color: lightgoldenrodyellow;
+            }
 
-        .article {
-            display: flex;
-            flex-wrap: nowrap;
-            padding: 5px;
-            margin: 5px;
-            border: 1px solid bisque;
-            background-color: lightgoldenrodyellow;
-        }
+            .emptyAuthor {
+                border: 1px dotted brown;
+                background-color: lightgoldenrodyellow;
+                padding: 5px;
+                margin: 5px;
+                position: relative;
+            }
 
-        .article .icon {
-            color: brown;
-            font-size: 80px;
-            margin-right: 10px;
-        }
+            .emptyAuthor .overlay {
+                position: absolute;
+                left: 0px;
+                right: 0px;
+                top: 0px;
+                bottom: 0px;
+                background-color: rgba(255,255,255,0.7);
+            }
 
-        .collapsedPaper {
-            display: flex;
-            padding: 5px;
-            margin: 5px;
-            border: 1px solid bisque;
-            background-color: lightgoldenrodyellow;
-        }
+            .emptyAuthor .avatar,
+            .author .avatar {
+                color: brown;
+                font-size: 80px;
+                margin-right: 10px;
+            }
 
-        .stats {
-            display: flex;
-            flex-direction: column;
-        }
+            .emptyArticle,
+            .article {
+                position: relative;
+                display: flex;
+                flex-wrap: nowrap;
+                padding: 5px;
+                margin: 5px;
+                border: 1px solid bisque;
+                background-color: lightgoldenrodyellow;
+            }
 
-        .statGroup {
-            overflow: hidden;
-        }
-        
-        .vertical {
-            transform: rotate(90deg);
-            display: block;
-        }
+            .emptyArticle .icon,
+            .article .icon {
+                color: brown;
+                font-size: 80px;
+                margin-right: 10px;
+            }
 
-        .logLine {
-            background-color: lightgoldenrodyellow;
-            border: 1px solid bisque;
-            border-radius: 3px;
-            padding: 5px;
-            margin: 5px;
-        }
+            .emptyArticle .overlay {
+                position: absolute;
+                left: 0px;
+                right: 0px;
+                top: 0px;
+                bottom: 0px;
+                background-color: rgba(255,255,255,0.7);
+            }
 
-        .statRow {
-            display: flex;
-            justify-content: space-between;
-        }
+            .collapsedPaper {
+                display: flex;
+                padding: 5px;
+                margin: 5px;
+                border: 1px solid bisque;
+                background-color: lightgoldenrodyellow;
+            }
 
-        .statRow:nth-child(even) {
-            background-color: lightgoldenrodyellow;
-        }
+            .stats {
+                display: flex;
+                flex-direction: column;
+            }
 
-        .statRow .title {
-            font-weight: bold;
-        }
+            .statGroup {
+                overflow: hidden;
+            }
+            
+            .vertical {
+                transform: rotate(90deg);
+                display: block;
+            }
+
+            .logLine {
+                background-color: lightgoldenrodyellow;
+                border: 1px solid bisque;
+                border-radius: 3px;
+                padding: 5px;
+                margin: 5px;
+            }
+
+            .statRow {
+                display: flex;
+                justify-content: space-between;
+            }
+
+            .statRow:nth-child(even) {
+                background-color: lightgoldenrodyellow;
+            }
+
+            .statRow .title {
+                font-weight: bold;
+            }
 
 
-        .rightJustify {
-            margin-left: auto;
-        }
+            .rightJustify {
+                margin-left: auto;
+            }
 
-        .rows {
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            width: 100%
-        }
+            .rows {
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                width: 100%
+            }
 
-        .touchstone {
-            padding: 5px;
-            position: relative;
-        }
+            .touchstone {
+                padding: 5px;
+                position: relative;
+            }
 
-        .touchstone .sentimentBadge {
-            position: absolute;
-            right: -3px;
-            top: 0px;
-            background-color: white;
-            color: brown;
-            font-size: 12px;
-        }
+            .touchstone .sentimentBadge {
+                position: absolute;
+                right: -3px;
+                top: 0px;
+                background-color: white;
+                color: brown;
+                font-size: 12px;
+            }
 
-        .touchstone .countBadge {
-            position: absolute;
-            left: -2px;
-            bottom: 0px;
-            font-size: 9px;
-            color: brown;
-        }
+            .touchstone .countBadge {
+                position: absolute;
+                left: -2px;
+                bottom: 0px;
+                font-size: 9px;
+                color: brown;
+            }
 
-        .positive {
-            color: darkolivegreen;
-        }
+            .positive {
+                color: darkolivegreen;
+            }
 
-        .negative {
-            color: darkred;
-        }
+            .negative {
+                color: darkred;
+            }
 
-        .tooltip {
-            position: relative;
-            display: inline-block;
-            cursor: pointer;
-        }
+            .tooltip {
+                position: relative;
+                display: inline-block;
+                cursor: pointer;
+            }
 
-        /* Tooltip text */
-        .tooltip .tooltiptext {
-            visibility: hidden;
-            background-color: brown;
-            color: white;
-            text-align: center;
-            padding: 3px;
-            border-radius: 2px;
-            border: 1px solid white;
-        
-            position: fixed;
-            z-index: 1;
-        }
+            /* Tooltip text */
+            .tooltip .tooltiptext {
+                visibility: hidden;
+                background-color: brown;
+                color: white;
+                text-align: center;
+                padding: 3px;
+                border-radius: 2px;
+                border: 1px solid white;
+            
+                position: fixed;
+                z-index: 1;
+            }
 
-        /* Show the tooltip text when you mouse over the tooltip container */
-        .tooltip:hover .tooltiptext {
-            visibility: visible;
-        }
+            /* Show the tooltip text when you mouse over the tooltip container */
+            .tooltip:hover .tooltiptext {
+                visibility: visible;
+            }
 
-        .instructions {
-            padding: 10px;
-            margin-left: auto;
-            margin-right: auto;
-            width: 300px;
-            border: 1px solid brown;
-            border-radius: 5px;
-        }
+            .instructions {
+                padding: 10px;
+                margin-left: auto;
+                margin-right: auto;
+                width: 300px;
+                border: 1px solid brown;
+                border-radius: 5px;
+            }
 
-        .instructions section {
-            margin: 5px;
-        }
-        
-        .header {
-            display: flex;
-            position: relative;
-        }
-        
-        .infoIcon {
-            top: 20px;
-            left: 10px;
-        }
+            .instructions section {
+                margin: 5px;
+            }
+            
+            .header {
+                display: flex;
+                position: relative;
+            }
+            
+            .infoIcon {
+                top: 20px;
+                left: 10px;
+            }
 
-        .infoIcon section {
-            margin: 5px;
-            text-align: left;
-        }
+            .infoIcon section {
+                margin: 5px;
+                text-align: left;
+            }
 
-        .infoIcon .tooltiptext {
-            width: 400px;
-        }
+            .infoIcon .tooltiptext {
+                width: 400px;
+            }
 
-        .vspacer {
-            height: 10px;
-        }
+            .vspacer {
+                height: 10px;
+            }
 
-        .loyalty {
-            margin-left: 5px;
-        }
+            .loyalty {
+                margin-left: 5px;
+            }
 
-    </style>
+        </style>
+    </head>
 
     <body>
         <div id="app"></div>

@@ -315,13 +315,15 @@ export let Constants = {
     TicksPerSecond: 2,
     NewpapersInPublicMemory: 4,
     MaxLogMessages: 4,
-    MaxApplicants: 1,
+    MaxApplicants: 2,
     MaxPendingArticles: 3,
     IncomePerPaper: 0.79,
     BaselineSalaryPerNewscycle: 2000,
     StartingSubscribers: 1000,
     CostPerArticle: 1000,
     StartingMoneyInBank: 30000,
+    MaxAuthors: 3,
+    MaxEditionArticles: 4,
 };
 
 
@@ -379,6 +381,11 @@ export class World {
     }
 
     hire(author: Author): void {
+        if (this.employedAuthors.length == Constants.MaxAuthors) {
+            this.addLog("You don't have room for another author");
+            return;
+        }
+
         this.employedAuthors.push(author);
         let iToRemove = this.availableAuthors.indexOf(author)
         this.availableAuthors.splice(iToRemove, 1);
@@ -398,6 +405,11 @@ export class World {
     }
 
     addArticleToCurrent(article: Article): void {
+        if (this.nextEdition.articles.length == Constants.MaxEditionArticles) {
+            this.addLog("The current edition is already full");
+            return;
+        }
+
         // remove from old
         this.pendingArticles.splice(this.pendingArticles.indexOf(article), 1);
 
