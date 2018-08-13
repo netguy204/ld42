@@ -2,6 +2,8 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import {World, Author, TouchstoneInstance, Constants, Newspaper, Article, Timer, Population} from './sim';
 import * as numbro from 'numbro';
+import Hotkeys from 'react-hot-keys';
+
 
 type TouchstoneProps = {
     touchstone: TouchstoneInstance;
@@ -564,6 +566,14 @@ class App extends React.Component<AppProps, AppState> {
 
     }
 
+    onKeyUp(): void {
+        if (this.state.gameState == GameState.PAUSED) {
+            this.setState({gameState: GameState.RUNNING});
+        } else if(this.state.gameState == GameState.RUNNING) {
+            this.setState({gameState: GameState.PAUSED});
+        }
+    }
+
     componentDidMount() {
         let tickPeriod = 1000.0 / Constants.TicksPerSecond;
         // game loop
@@ -589,15 +599,19 @@ class App extends React.Component<AppProps, AppState> {
         if (this.state.gameState == GameState.BOOT) {
             return <StartMenu onStart={() => this.startGame()}></StartMenu>;
         } else {
-            let pauseButton = <button onClick={() => this.pauseGame(true)}>Pause</button>;
+            let pauseActionName = 'Pause';
             if (this.state.gameState == GameState.PAUSED) {
-                pauseButton = <button onClick={() => this.pauseGame(false)}>Un-Pause</button>;
+                pauseActionName = 'Un-Pause';
             }
+            let pauseButton = <button onClick={() => this.pauseGame(pauseActionName == 'Pause')}>Pause</button>;
             return (
-                <div>
+                <Hotkeys 
+                    keyName="space"
+                    onKeyUp={this.onKeyUp.bind(this)}>
                     <Game world={this.props.world}></Game>
                     {pauseButton}
-                </div>
+                    Press space to {pauseActionName}
+                </Hotkeys>
             );
         }
     }
