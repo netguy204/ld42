@@ -4,6 +4,20 @@ import {World, Author, TouchstoneInstance, Constants, Newspaper, Article, Timer,
 import * as numbro from 'numbro';
 import Hotkeys from 'react-hot-keys';
 
+type InfoProps = {
+}
+
+class InfoIcon extends React.Component<InfoProps> {
+    render() {
+        return (
+            <i className="infoIcon fas fa-info-circle tooltip">
+                <div className="tooltiptext">
+                    {this.props.children}
+                </div>
+            </i>
+        );
+    }
+}
 
 type TouchstoneProps = {
     touchstone: TouchstoneInstance;
@@ -179,10 +193,30 @@ class AuthorsC extends React.Component<AppProps> {
     render() {
         return (
             <div className="authors section">
-                <h1>Employed Authors</h1>
+                <div className="header">
+                    <h1>Employed Authors</h1>
+                    <InfoIcon>
+                        <section>
+                            These authors work for you. When their bar fills up they create an article that
+                            you can choose to publish.
+                        </section>
+                        <section>
+                            You can fire these authors and you should if they aren't producing the stories
+                            your audience demands.
+                        </section>
+                    </InfoIcon>
+                </div>
                 <EmployedAuthorsC world={this.props.world} />
                 
-                <h1>Available Authors</h1>
+                <div className="header">
+                    <h1>Available Authors</h1>
+                    <InfoIcon>
+                        <section>
+                            These are authors that are available to hire. You should only hire them if they
+                            appeal to an audience you are working to reach.
+                        </section>
+                    </InfoIcon>
+                </div>
                 <AvailableAuthorsC world={this.props.world} />
             </div>
         );
@@ -279,7 +313,21 @@ class PendingArticlesC extends React.Component<AppProps> {
     render() {
         return (
             <div className="pendingArticles section">
-                <h1>Pending Articles</h1>
+                <div className="header">
+                    <h1>Pending Articles</h1>
+                    <InfoIcon>
+                        <section>
+                            These articles have been written by your authors and are available
+                            to be included in the next edition.
+                        </section>
+                        <section>
+                            You should include them if they appeal to your audience.
+                        </section>
+                        <section>
+                            They are losing their relevance and will eventually be worthless.
+                        </section>
+                    </InfoIcon>
+                </div>
                 <ArticlesC articles={this.props.world.pendingArticles}
                     articleState={ArticleState.PENDING}
                     onAction={(art) => this.props.world.addArticleToCurrent(art)}
@@ -312,7 +360,20 @@ class NextEditionC extends React.Component<AppProps> {
     render() {
         return (
             <div className="currentPaper section">
-                <h1>Next Edition</h1>
+                <div className="header">
+                    <h1>Next Edition</h1>
+                    <InfoIcon>
+                        <section>
+                            This is the next edition of your newspaper. It will be published when
+                            the bar runs out.
+                        </section>
+                        <section>
+                            You can add or remove articles until the paper is published. Once the
+                            paper is published it will be part of the public memory and you will
+                            be judged for its contents.
+                        </section>
+                    </InfoIcon>
+                </div>
                 <RunningOutBar timer={this.props.world.nextEditionTimer} />
                 <PaperC paper={this.props.world.nextEdition}
                     isSummary={false}
@@ -412,7 +473,15 @@ class StatsC extends React.Component<AppProps> {
         return (
             <div className="stats section">
                 <div className="statGroup">
-                    <h1>Public Memory</h1>
+                    <div className="header">
+                        <h1>Public Memory</h1>
+                        <InfoIcon>
+                            <section>
+                                These are your works that the public remembers. Each region will
+                                base their feelings about you on these works and their content.
+                            </section>
+                        </InfoIcon>
+                    </div>
                     <PublicMemory papers={this.props.world.publicMemory} />
                 </div>
 
@@ -550,7 +619,23 @@ type StartProps = {
 
 class StartMenu extends React.Component<StartProps> {
     render() {
-        return <button onClick={this.props.onStart}>Start</button>;
+        return (
+            <div className="instructions">
+                <button onClick={this.props.onStart}>Start</button>
+                <section>
+                    <b>You are the editor</b> of a small-town newspaper. You start with one author who
+                    appeals to a small local population. Decide which of their articles to publish,
+                    hire new authors, and expand your subscriber base to take over your region.
+                </section>
+                <section>
+                    <b>Pay attention to your bank account.</b> If you run out of money your newspaper will close.
+                </section>
+                <section>
+                    <b>Press space to pause</b> so you can consider your moves. Press space again to unpause
+                    and see your decisions play out.
+                </section>
+            </div>
+        );
     }
 }
 type AppState = {
@@ -611,13 +696,14 @@ class App extends React.Component<AppProps, AppState> {
                     <Game world={this.props.world}></Game>
                     {pauseButton}
                     Press space to {pauseActionName}
+                    <div className="vspacer"></div>
                 </Hotkeys>
             );
         }
     }
 
     startGame() {
-        this.setState({gameState: GameState.RUNNING});
+        this.setState({gameState: GameState.PAUSED});
     }
 
     pauseGame(pause: boolean) {
