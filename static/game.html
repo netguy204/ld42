@@ -11,14 +11,14 @@
         .gameRows {
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            height: 100%;
         }
 
         .gameColumns {
             display: flex;
             flex-wrap: nowrap;
             width: 100%;
-            height: 85%;
+            flex: 2;
         }
 
         .regions {
@@ -70,7 +70,6 @@
         }
 
         .pendingArticles .rows {
-            width: 100%
         }
 
         .currentPaper {
@@ -121,7 +120,12 @@
         }
 
         .statGroup {
-            height: 30%;
+            overflow: hidden;
+        }
+        
+        .vertical {
+            transform: rotate(90deg);
+            display: block;
         }
 
         .logLine {
@@ -154,6 +158,7 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            width: 100%
         }
 
         .touchstone {

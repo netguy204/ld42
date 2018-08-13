@@ -101,39 +101,45 @@ class FillingUpBar extends React.Component<ProgressBarProps> {
 
 type AuthorProps = {
     author: Author;
-    onHire?: () => void;
-    onFire?: () => void;
+    onAction?: () => void;
 }
 
-class AuthorC extends React.Component<AuthorProps> {
+class EmployedAuthorC extends React.Component<AuthorProps> {
     render() {
-        let hireButton: any = null;
-        if (this.props.onHire != null) {
-            hireButton = (
-                <button onClick={this.props.onHire}>
-                    <i className="fas fa-chevron-left"></i>
-                </button>
-            );
-        }
-
-        let fireButton: any = null;
-        if (this.props.onFire != null) {
-            fireButton = (
-                <button className="rightJustify" onClick={this.props.onFire}>
-                    <i className="fas fa-chevron-right"></i>
-                </button>
-            );
-        }
         return (
             <div className="author">
-                {hireButton}
                 <i className="far fa-address-book avatar" />
                 <div className="rows">
                     <div className="name">{this.props.author.name}</div>
                     <TouchstonesC touchstones={this.props.author.instances} />
                     <FillingUpBar timer={this.props.author.articleTimer} />
                 </div>
-                {fireButton}
+                <button className="rightJustify" onClick={this.props.onAction}>
+                    <span className="vertical">
+                        Fire
+                    </span>
+                </button>
+            </div>
+        );
+
+    }
+}
+
+class AvailableAuthorC extends React.Component<AuthorProps> {
+    render() {
+        return (
+            <div className="author">
+                <i className="far fa-address-book avatar" />
+                <div className="rows">
+                    <div className="name">{this.props.author.name}</div>
+                    <TouchstonesC touchstones={this.props.author.instances} />
+                    <RunningOutBar timer={this.props.author.hireTimer} />
+                </div>
+                <button onClick={this.props.onAction}>
+                    <span className="vertical">
+                        Hire
+                    </span>
+                </button>
             </div>
         );
     }
@@ -143,17 +149,43 @@ class EmployedAuthorsC extends React.Component<AppProps> {
     render() {
         let authors = this.props.world.employedAuthors.map((auth) => {
             let fire = () => this.props.world.fire(auth);
-            return <AuthorC key={auth.name} author={auth} onFire={fire} />
+            return <EmployedAuthorC key={auth.name} author={auth} onAction={fire} />
         });
         return (
-            <div className="employedAuthors section">
-                <h1>Employed Authors</h1>
+            <div className="employedAuthors">
                 {authors}
             </div>
         );
     }
 }
 
+class AvailableAuthorsC extends React.Component<AppProps> {
+    render() {
+        let authors = this.props.world.availableAuthors.map((auth) => {
+            let hire = () => this.props.world.hire(auth);
+            return <AvailableAuthorC key={auth.name} author={auth} onAction={hire} />
+        });
+        return (
+            <div className="availableAuthors">
+                {authors}
+            </div>
+        );
+    }
+}
+
+class AuthorsC extends React.Component<AppProps> {
+    render() {
+        return (
+            <div className="authors section">
+                <h1>Employed Authors</h1>
+                <EmployedAuthorsC world={this.props.world} />
+                
+                <h1>Available Authors</h1>
+                <AvailableAuthorsC world={this.props.world} />
+            </div>
+        );
+    }
+}
 enum ArticleState {
     PENDING,
     STAGED,
@@ -174,7 +206,9 @@ class ArticleC extends React.Component<ArticleProps> {
         if (this.props.articleState == ArticleState.PENDING) {
             toStagedButton = (
                 <button className="rightJustify" onClick={this.props.onAction}>
-                    <i className="fas fa-chevron-right"></i>
+                    <span className="vertical">
+                        Publish
+                    </span>
                 </button>
             )
 
@@ -185,7 +219,9 @@ class ArticleC extends React.Component<ArticleProps> {
         if (this.props.articleState == ArticleState.STAGED) {
             fromStagedButton = (
                 <button onClick={this.props.onAction}>
-                    <i className="fas fa-chevron-left"></i>
+                    <span className="vertical">
+                        Scrap
+                    </span>
                 </button>
             );
         }
@@ -346,7 +382,7 @@ class StatRowC extends React.Component<StatProps> {
 class ConsoleC extends React.Component<AppProps> {
     render() {
         let logLines = this.props.world.logMessages.map((line) => {
-            return <div className="logLine">{line}</div>;
+            return <div className="logLine" key={line}>{line}</div>;
         });
         return (
             <div className="logMessages rows">
@@ -356,35 +392,17 @@ class ConsoleC extends React.Component<AppProps> {
     }
 }
 
-class AvailableAuthorsC extends React.Component<AppProps> {
-    render() {
-        let authors = this.props.world.availableAuthors.map((auth) => {
-            let hire = () => this.props.world.hire(auth);
-            return <AuthorC key={auth.name} author={auth} onHire={hire} />
-        });
-        return (
-            <div className="availableAuthors">
-                {authors}
-            </div>
-        );
-    }
-}
 
 class StatsC extends React.Component<AppProps> {
     render() {
         let money = `\$${numbro(this.props.world.moneyInBank).format({average: true})}`;
-        let subscribers = numbro(this.props.world.currentSubscribers).format({average: true});
+        let subscribers = numbro(this.props.world.numSubscribers()).format({average: true});
 
         return (
             <div className="stats section">
                 <div className="statGroup">
                     <h1>Public Memory</h1>
                     <PublicMemory papers={this.props.world.publicMemory} />
-                </div>
-
-                <div className="statGroup">
-                    <h1>Available Authors</h1>
-                    <AvailableAuthorsC world={this.props.world} />
                 </div>
 
                 <div className="statGroup">
@@ -409,7 +427,7 @@ type PopulationProps = {
 
 class SubscriberRatioC extends React.Component<PopulationProps> {
     render() {
-        let ratio = this.props.population.subscriberRatio;
+        let ratio = this.props.population.subscriberRatio();
         let style = {width: `${ratio*100}%`};
 
         return (
@@ -420,33 +438,46 @@ class SubscriberRatioC extends React.Component<PopulationProps> {
     }
 }
 
-class PopulationC extends React.Component<PopulationProps> {
+type LoyaltyProps = {
+    loyalty: number;
+}
+
+class LoyaltyC extends React.Component<LoyaltyProps> {
     render() {
         let icon = "fa-meh";
-        if (this.props.population.loyalty < -.3) {
+        if (this.props.loyalty < -.3) {
             icon = "fa-frown";
         }
-        if (this.props.population.loyalty < -.5) {
+        if (this.props.loyalty < -.5) {
             icon = "fa-angry";
         }
-        if (this.props.population.loyalty < -.7) {
+        if (this.props.loyalty < -.7) {
             icon = "fa-dizzy";
         }
 
-        if (this.props.population.loyalty > .3) {
+        if (this.props.loyalty > .3) {
             icon = "fa-grin-alt";
         }
-        if (this.props.population.loyalty > .5) {
+        if (this.props.loyalty > .5) {
             icon = "fa-smile-wink";
         }
-        if (this.props.population.loyalty > .7) {
+        if (this.props.loyalty > .7) {
             icon = "fa-grin-hearts";
         }
+
+        return <i className={"far loyalty " + icon}></i>;
+    }
+}
+class PopulationC extends React.Component<PopulationProps> {
+    render() {
 
         return (
             <div className="population" style={this.props.style}>
                 <div className="rows">
-                    <div className="name">{this.props.population.name}</div>
+                    <div className="name">
+                        {this.props.population.name}
+                        <LoyaltyC loyalty={this.props.population.lastLoyalty} />
+                    </div>
                     <TouchstonesC touchstones={this.props.population.instances} />
                     <SubscriberRatioC population={this.props.population} />
                 </div>
@@ -457,15 +488,15 @@ class PopulationC extends React.Component<PopulationProps> {
 
 class RegionsC extends React.Component<AppProps> {
     render() {
-        let totalLargeness = 0;
+        let worldPopulation = 0;
         this.props.world.populations.forEach((pop) => {
-            totalLargeness += pop.largeness;
+            worldPopulation += pop.totalPopulation;
         });
 
         let populations = this.props.world.populations.map((pop) => {
-            let ratio = pop.largeness / totalLargeness;
+            let ratio = pop.totalPopulation / worldPopulation;
             let style = {width: `${ratio*100}%`};
-            return <PopulationC population={pop} style={style} />;
+            return <PopulationC key={pop.name} population={pop} style={style} />;
         });
         return (
             <div className="regions">
@@ -480,7 +511,7 @@ class Game extends React.Component<AppProps, {}> {
         return (
             <div className="gameRows">
                 <div className="gameColumns">
-                    <EmployedAuthorsC world={this.props.world} />
+                    <AuthorsC world={this.props.world} />
                     <PendingArticlesC world={this.props.world} />
                     <NextEditionC world={this.props.world} />
                     <StatsC world={this.props.world} />

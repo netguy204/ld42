@@ -143,19 +143,24 @@ let articleNameGen = NameGen.compile("sV'i");
 export class Author extends TouchstoneBag {
     progress: number; // [0,1] when they'll have their next article ready
     articleTimer: Timer;
-    numWrittenLastInterval: number; // how many articles they've produce in the last interval
-    numPublishedLastInterval: number; // how many of their articles we've published
+    hireTimer: Timer;
     name: string;
-    salary: number;
 
     constructor(touchstones: TouchstoneInstance[], ticksPerArticle: number, name: string) {
         super(touchstones);
+
         this.progress = 0;
         this.articleTimer = new Timer(ticksPerArticle);
-        this.numWrittenLastInterval = 0;
-        this.numPublishedLastInterval = 0;
+        this.hireTimer = new Timer(ticksPerArticle); // better authors go away faster
         this.name = name;
-        this.salary = 1500000 / ticksPerArticle;
+    }
+
+    salary() {
+        // an author that produces one article per newscycle makes the
+        // baseline salary. an author that writes twice as fast makes
+        // twice as much
+        let salaryRatio = Constants.TicksPerNewscycle / this.articleTimer.startTicks;
+        return Constants.BaselineSalaryPerNewscycle * salaryRatio;
     }
 
     static random(): Author {
@@ -165,13 +170,17 @@ export class Author extends TouchstoneBag {
         return new Author(traits.instances, ticksPerArticle, name);
     }
 
-    tick(): Article|null {
-       if(this.articleTimer.tick()) {
-           this.articleTimer.reset();
-           return this.write();
-       } else {
-           return null;
-       }
+    availableTick(): boolean {
+        return this.hireTimer.tick();
+    }
+
+    employedTick(): Article|null {
+        if(this.articleTimer.tick()) {
+            this.articleTimer.reset();
+            return this.write();
+        } else {
+            return null;
+        }
     }
 
     write(): Article {
@@ -224,85 +233,72 @@ export class Newspaper {
     }
 }
 
+let populationNameGen = NameGen.compile("sV'i");
+
 export class Population extends TouchstoneBag {
     name: string;
-    loyalty: number; // -1 to 1, -1 most displeased. 1 is estatic
-    /*
     numSubscribers: number;
     totalPopulation: number;
+    lastLoyalty: number;
 
-    subscriberRatio(): number {
-        return numSubscribers / totalPopulation;
-    }
-    */
-    subscriberRatio: number; // 0-1, what percentage subscribe?
-    largeness: number; // 0-1, how many from teeny tiny to massive
-    topics: TouchstoneInstance[];
-
-    constructor(touchstones: TouchstoneInstance[], name: string, largeness: number) {
+    constructor(touchstones: TouchstoneInstance[], name: string, totalPopulation: number) {
         super(touchstones);
 
-        this.topics = touchstones;
         this.name = name;
-        this.loyalty = 0;
-        this.subscriberRatio = 0;
-        this.largeness = largeness;
+        this.numSubscribers = 0;
+        this.totalPopulation = totalPopulation;
     }
 
-    score(paper: Newspaper): number {
+    static random(): Population {
+        let nTraits = randomBetween(1, 3);
+        let traits = TouchstoneLibrary.draw(nTraits);
+        return new Population(
+            traits.instances,
+            populationNameGen.toString(),
+            randomBetween(5000, 10000)
+        );
+    }
+
+    loyaltyToPaper(paper: Newspaper): number {
         let total = 0;
-        for (let artI = 0; artI < paper.articles.length; artI) {
-            let article = paper.articles[artI];
+        let touchstones = paper.touchstones();
+        if (touchstones.length == 0) {
+            return 0;
+        }
 
-            for (let artTouchI = 0; artTouchI < article.instances.length; artTouchI++) {
-                let artTouch = article.instances[artTouchI];
+        for (let touchI = 0; touchI < touchstones.length; touchI++) {
+            let touch = touchstones[touchI];
 
-                for (let popI = 0; popI < this.instances.length; popI++) {
-                    let popInst = this.instances[popI];
+            for (let popI = 0; popI < this.instances.length; popI++) {
+                let popInst = this.instances[popI];
 
-                    if (artTouch.identity == popInst.identity) {
-                        if (artTouch.approval == popInst.approval) {
-                            total += 1;
-                        } else {
-                            total -= 1;
-                        }
+                if (touch.identity == popInst.identity) {
+                    if (touch.approval == popInst.approval) {
+                        total += 1;
+                    } else {
+                        total -= 1;
                     }
                 }
-
             }
         }
 
-        return total;
+        return total / touchstones.length;
     }
 
-    getCurrentPopulationCount(): number {
-        return this.largeness * 10000;
-    }
-
-    getSubscriberCount(publicMemory: Newspaper[]): number {
-        let size = this.getCurrentPopulationCount();
-        let subCount = 0;
-
-        publicMemory.forEach(paper => {
-            paper.articles.forEach(article => {
-                article.coveredTopics.forEach(topic => {
-                    for (let i = 0; i < this.topics.length; i++) {
-                        if (topic.equals(this.topics[i])) {
-                            subCount++;
-                        }
-                    }
-                });
-            });
+    loyalty(papers: Newspaper[]): number {
+        let total = 0;
+        papers.forEach((paper) => {
+            total += this.loyaltyToPaper(paper);
         });
-
-        this.subscriberRatio = subCount / this.topics.length;
-
-        return size * this.subscriberRatio;
+        return total / papers.length;
     }
 
-    judge(paper: Newspaper) {
-        let score = this.score(paper);
-        this.loyalty += score;
+    subscriberRatio(): number {
+        return this.numSubscribers / this.totalPopulation;
+    }
+
+    numNonSubscribers(): number {
+        return this.totalPopulation - this.numSubscribers;
     }
 }
 
@@ -319,9 +315,15 @@ export let Constants = {
     TicksPerSecond: 2,
     NewpapersInPublicMemory: 4,
     MaxLogMessages: 20,
+    MaxApplicants: 1,
+    MaxPendingArticles: 3,
+    IncomePerPaper: 0.59,
+    BaselineSalaryPerNewscycle: 2000,
+    StartingSubscribers: 1000,
+    CostPerArticle: 1000,
+    StartingMoneyInBank: 30000,
 };
 
-let populationNameGen = NameGen.compile("sV'i");
 
 export class World {
     employedAuthors: Author[];
@@ -334,7 +336,6 @@ export class World {
     publicMemory: Newspaper[];
 
     moneyInBank: number;
-    currentSubscribers: number;
 
     currentEvents: WorldEvent[];
 
@@ -349,24 +350,20 @@ export class World {
         this.nextEdition = new Newspaper([]);
         this.nextEditionTimer = new Timer(Constants.TicksPerNewscycle);
         this.publicMemory = [];
-        this.moneyInBank = 5000;
-        this.currentSubscribers = 1000;
+        this.moneyInBank = Constants.StartingMoneyInBank;
         this.currentEvents = [];
         this.populations = [];
         this.logMessages = [];
 
-        let traits: TouchstoneBag|null = null;
         for (let i = 0; i < 5; i++) {
-            let nTraits = randomBetween(1, 3);
-            traits = TouchstoneLibrary.draw(nTraits);
-            this.populations.push(new Population(
-                traits.instances,
-                populationNameGen.toString(),
-                Math.random() / 2 + 0.5
-            ))
+            this.populations.push(Population.random());
         }
 
-        let author = new Author((traits as TouchstoneBag).instances, Constants.TicksPerNewscycle/2, "Susy Joe");
+        // tweak the first population to make it our home turf
+        let homeTurf = this.populations[0];
+        homeTurf.numSubscribers = 1000;
+        let traits = homeTurf.instances;
+        let author = new Author(traits, Constants.TicksPerNewscycle/2, "Susy Joe");
         this.employedAuthors.push(author);
 
         this.addLog("Welcome to Sim Tabloid!");
@@ -413,58 +410,86 @@ export class World {
         }
     }
 
-    getCycleIncome(): number {
-        let cycleIncome = 0;
-
-        this.populations.forEach(pop => {
-            cycleIncome += pop.getSubscriberCount(this.publicMemory) * 16; //16 is an arbirary number to make the income not look so round & even
+    numSubscribers(): number {
+        let subscribers = 0;
+        this.populations.forEach((pop) => {
+            subscribers += pop.numSubscribers;
         });
-
-        return cycleIncome;
+        return subscribers;
     }
-    getCycleSubscribers(): number {
-        let cycleSubs = 0;
 
-        this.populations.forEach(pop => {
-            cycleSubs += pop.getSubscriberCount(this.publicMemory)
-        });
+    getCycleIncome(): number {
+        // subscribers don't pay for a missing paper
+        if (this.nextEdition.articles.length == 0) {
+            return 0;
+        }
 
-        return cycleSubs;
+        return this.numSubscribers() * Constants.IncomePerPaper;
     }
 
     getCycleExpenses(): number {
         let salaries = 0;
         let utilities = randomBetween(142, 433);
+        let commissions = 0;
 
         this.employedAuthors.forEach(author => {
-            salaries += author.salary;
+            salaries += author.salary();
         });
 
-        return (salaries / 365) + utilities;
+        // pay for each of our articles
+        this.nextEdition.articles.forEach((article) => {
+            commissions += Constants.CostPerArticle;
+        })
+
+        return salaries + utilities + commissions;
+    }
+
+    updateSubscribers(): void {
+        this.populations.forEach((pop) => {
+            let loyalty = pop.loyalty(this.publicMemory);
+            pop.lastLoyalty = loyalty;
+            if (loyalty < 0) {
+                pop.numSubscribers -= (pop.numSubscribers * Math.abs(loyalty));
+            }
+            if (loyalty > 0) {
+                pop.numSubscribers += (pop.numNonSubscribers() * loyalty);
+            }
+            if (loyalty == 0) {
+                // meh is bad
+                pop.numSubscribers *= 0.9;
+            }
+
+            // make sure the answer is in a reasonable bound
+            pop.numSubscribers = Math.max(0, Math.min(pop.totalPopulation, pop.numSubscribers));
+        });
     }
 
     tick(): void {
         // give all authors a chance to finish writing
         this.employedAuthors.forEach((author) => {
-            let maybeArticle = author.tick();
+            let maybeArticle = author.employedTick();
             if (maybeArticle != null) {
-                console.log("new article");
                 this.pendingArticles.push(maybeArticle as Article);
             }
         });
 
         // give articles a chance to timeout
-        let toRemove: Article[] = [];
+        let articlesToRemove: Article[] = [];
         this.pendingArticles.forEach((article) => {
             if (article.tick()) {
-                toRemove.push(article);
+                articlesToRemove.push(article);
             }
         })
 
         // remove the articles that had timed out
-        toRemove.forEach((article) => {
+        articlesToRemove.forEach((article) => {
             this.pendingArticles.splice(this.pendingArticles.indexOf(article), 1);
         })
+
+        // drop the oldest article if we have too many
+        if (this.pendingArticles.length > Constants.MaxPendingArticles) {
+            this.pendingArticles.splice(0, 1);
+        }
 
         // see if the current edition is timed out
         if (this.nextEditionTimer.tick()) {
@@ -479,12 +504,27 @@ export class World {
             this.moneyInBank += this.getCycleIncome();
             this.moneyInBank -= this.getCycleExpenses();
 
-            this.currentSubscribers = this.getCycleSubscribers();
+            // we get/lose subscribers after we get our income this cycle
+            this.updateSubscribers();
 
             this.nextEdition = new Newspaper([]);
         }
 
-        this.aWildApplicantAppeared();
+        // remove any candidates that have timed out
+        let applicantsToRemove: Author[] = [];
+        this.availableAuthors.forEach((author) => {
+            if(author.availableTick()) {
+                applicantsToRemove.push(author);
+            }
+        });
+        applicantsToRemove.forEach((author) => {
+            this.availableAuthors.splice(this.availableAuthors.indexOf(author), 1);
+        })
+
+        // roll for a new candidate if we have space
+        if (this.availableAuthors.length < Constants.MaxApplicants) {
+            this.aWildApplicantAppeared();
+        }
     }
 
     /*
